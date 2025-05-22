@@ -1,0 +1,16 @@
+### Get all customers
+GET http://localhost:8080/api/customers
+
+### Create a new customer
+POST http://localhost:8080/api/customers
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "123-456-7890",
+  "address": "123 Main St"
+}
+
+### Search customers
+GET http://localhost:8080/api/customers/search?term=john
