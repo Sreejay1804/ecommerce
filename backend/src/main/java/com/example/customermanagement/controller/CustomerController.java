@@ -1,69 +1,121 @@
 package com.example.customermanagement.controller;
 
-import com.example.customermanagement.model.Customer;
-import com.example.customermanagement.service.CustomerService;
-import jakarta.validation.Valid;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.customermanagement.exception.CustomerNotFoundException;
+import com.example.customermanagement.exception.DuplicateEmailException;
+import com.example.customermanagement.model.Customer;
+import com.example.customermanagement.service.CustomerService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/customers")
 @CrossOrigin(origins = "http://localhost:3000")
 public class CustomerController {
-    
-    private final CustomerService customerService;
-    
+
     @Autowired
-    public CustomerController(CustomerService customerService) {
-        this.customerService = customerService;
-    }
-    
+    private CustomerService customerService;
+
     @GetMapping
     public ResponseEntity<List<Customer>> getAllCustomers() {
         List<Customer> customers = customerService.getAllCustomers();
-        return new ResponseEntity<>(customers, HttpStatus.OK);
+        return ResponseEntity.ok(customers);
     }
-    
+
     @GetMapping("/{id}")
-    public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
-        Optional<Customer> customer = customerService.getCustomerById(id);
-        return customer.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-    
-    @GetMapping("/search")
-    public ResponseEntity<List<Customer>> searchCustomers(@RequestParam String term) {
-        List<Customer> customers = customerService.searchCustomers(term);
-        return new ResponseEntity<>(customers, HttpStatus.OK);
-    }
-    
-    @PostMapping
-    public ResponseEntity<Customer> createCustomer(@Valid @RequestBody Customer customer) {
-        Customer savedCustomer = customerService.saveCustomer(customer);
-        return new ResponseEntity<>(savedCustomer, HttpStatus.CREATED);
-    }
-    
-    @PutMapping("/{id}")
-    public ResponseEntity<Customer> updateCustomer(@PathVariable Long id, @Valid @RequestBody Customer customer) {
-        Optional<Customer> existingCustomer = customerService.getCustomerById(id);
-        
-        if (existingCustomer.isPresent()) {
-            customer.setId(id);
-            Customer updatedCustomer = customerService.saveCustomer(customer);
-            return new ResponseEntity<>(updatedCustomer, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> getCustomerById(@PathVariable Long id) {
+        try {
+            Customer customer = customerService.getCustomerById(id);
+            return ResponseEntity.ok(customer);
+        } catch (CustomerNotFoundException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
     }
-    
+
+    @PostMapping
+    public ResponseEntity<?> createCustomer(@Valid @RequestBody Customer customer) {
+        try {
+            Customer savedCustomer = customerService.createCustomer(customer);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedCustomer);
+        } catch (DuplicateEmailException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "An error occurred while creating the customer");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateCustomer(@PathVariable Long id, @Valid @RequestBody Customer customerDetails) {
+        try {
+            Customer updatedCustomer = customerService.updateCustomer(id, customerDetails);
+            return ResponseEntity.ok(updatedCustomer);
+        } catch (CustomerNotFoundException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (DuplicateEmailException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "An error occurred while updating the customer");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
-        boolean deleted = customerService.deleteCustomer(id);
-        return deleted ? new ResponseEntity<>(HttpStatus.NO_CONTENT) : new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> deleteCustomer(@PathVariable Long id) {
+        try {
+            customerService.deleteCustomer(id);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Customer deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (CustomerNotFoundException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "An error occurred while deleting the customer");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Customer>> searchCustomers(@RequestParam("term") String searchTerm) {
+        List<Customer> customers = customerService.searchCustomers(searchTerm);
+        return ResponseEntity.ok(customers);
+    }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<Map<String, Boolean>> checkEmailExists(@RequestParam("email") String email) {
+        boolean exists = customerService.existsByEmail(email);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("exists", exists);
+        return ResponseEntity.ok(response);
     }
 }
