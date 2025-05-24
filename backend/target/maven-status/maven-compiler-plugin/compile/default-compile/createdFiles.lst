@@ -1,5 +1,8 @@
 com\example\customermanagement\controller\CustomerController.class
 com\example\customermanagement\CustomerManagementApplication.class
+com\example\customermanagement\exception\GlobalExceptionHandler.class
 com\example\customermanagement\service\CustomerService.class
+com\example\customermanagement\exception\DuplicateEmailException.class
 com\example\customermanagement\model\Customer.class
+com\example\customermanagement\exception\CustomerNotFoundException.class
 com\example\customermanagement\repository\CustomerRepository.class
