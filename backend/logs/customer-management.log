@@ -1,0 +1,82 @@
+2025-05-27T12:46:39.132+05:30  INFO 21716 --- [customer-management-app] [restartedMain] c.e.c.CustomerManagementApplication      : Starting CustomerManagementApplication using Java 17.0.12 with PID 21716 (C:\Users\Sreejay\Music\bts\btsng\ecommerce_app\ecom\backend\target\classes started by Sreejay in C:\Users\Sreejay\Music\bts\btsng\ecommerce_app\ecom\backend)
+2025-05-27T12:46:39.135+05:30  INFO 21716 --- [customer-management-app] [restartedMain] c.e.c.CustomerManagementApplication      : No active profile set, falling back to 1 default profile: "default"
+2025-05-27T12:46:39.197+05:30  INFO 21716 --- [customer-management-app] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-05-27T12:46:39.198+05:30  INFO 21716 --- [customer-management-app] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-05-27T12:46:40.034+05:30  INFO 21716 --- [customer-management-app] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-27T12:46:40.090+05:30  INFO 21716 --- [customer-management-app] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 49 ms. Found 1 JPA repository interface.
+2025-05-27T12:46:40.846+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-05-27T12:46:40.858+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-27T12:46:40.858+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2025-05-27T12:46:40.928+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-27T12:46:40.929+05:30  INFO 21716 --- [customer-management-app] [restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1730 ms
+2025-05-27T12:46:41.116+05:30 DEBUG 21716 --- [customer-management-app] [restartedMain] o.s.w.f.ServerHttpObservationFilter      : Filter 'webMvcObservationFilter' configured for use
+2025-05-27T12:46:41.181+05:30  INFO 21716 --- [customer-management-app] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-05-27T12:46:41.382+05:30  INFO 21716 --- [customer-management-app] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@44b0407f
+2025-05-27T12:46:41.384+05:30  INFO 21716 --- [customer-management-app] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-05-27T12:46:41.482+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-27T12:46:41.549+05:30  INFO 21716 --- [customer-management-app] [restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2025-05-27T12:46:41.593+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-05-27T12:46:41.812+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-27T12:46:41.892+05:30  WARN 21716 --- [customer-management-app] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-05-27T12:46:42.603+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-05-27T12:46:42.700+05:30  INFO 21716 --- [customer-management-app] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-27T12:46:43.024+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-05-27T12:46:43.735+05:30 DEBUG 21716 --- [customer-management-app] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 9 mappings in 'requestMappingHandlerMapping'
+2025-05-27T12:46:43.903+05:30 DEBUG 21716 --- [customer-management-app] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2025-05-27T12:46:43.965+05:30 DEBUG 21716 --- [customer-management-app] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-05-27T12:46:44.016+05:30 DEBUG 21716 --- [customer-management-app] [restartedMain] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-05-27T12:46:44.554+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2025-05-27T12:46:44.565+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoint(s) beneath base path '/actuator'
+2025-05-27T12:46:44.690+05:30  INFO 21716 --- [customer-management-app] [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2025-05-27T12:46:44.710+05:30  INFO 21716 --- [customer-management-app] [restartedMain] c.e.c.CustomerManagementApplication      : Started CustomerManagementApplication in 6.065 seconds (process running for 6.476)
+2025-05-27T12:47:50.162+05:30  INFO 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-05-27T12:47:50.173+05:30  INFO 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-05-27T12:47:50.178+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-05-27T12:47:50.180+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-05-27T12:47:50.181+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-05-27T12:47:50.234+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@7638b116
+2025-05-27T12:47:50.237+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@5d200beb
+2025-05-27T12:47:50.239+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-05-27T12:47:50.239+05:30  INFO 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 65 ms
+2025-05-27T12:47:50.359+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/customers", parameters={}
+2025-05-27T12:47:50.415+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.customermanagement.controller.CustomerController#getAllCustomers()
+2025-05-27T12:47:50.873+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.address,
+        c1_0.created_at,
+        c1_0.email,
+        c1_0.name,
+        c1_0.phone,
+        c1_0.updated_at 
+    from
+        customers c1_0 
+    order by
+        c1_0.name
+2025-05-27T12:47:51.065+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-05-27T12:47:51.069+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[Customer{id=6, name='John Doe', email='johndoe@gmail.com', phone='9993456697', address='T.Nagar'},  (truncated)...]
+2025-05-27T12:47:51.205+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-05-27T12:47:51.207+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/customers", parameters={}
+2025-05-27T12:47:51.208+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.example.customermanagement.controller.CustomerController#getAllCustomers()
+2025-05-27T12:47:51.212+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-1] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.address,
+        c1_0.created_at,
+        c1_0.email,
+        c1_0.name,
+        c1_0.phone,
+        c1_0.updated_at 
+    from
+        customers c1_0 
+    order by
+        c1_0.name
+2025-05-27T12:47:51.218+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2025-05-27T12:47:51.219+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [[Customer{id=6, name='John Doe', email='johndoe@gmail.com', phone='9993456697', address='T.Nagar'},  (truncated)...]
+2025-05-27T12:47:51.223+05:30 DEBUG 21716 --- [customer-management-app] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-05-27T12:51:22.886+05:30  WARN 21716 --- [customer-management-app] [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=3m41s361ms348µs400ns).
+2025-05-27T21:45:57.653+05:30  WARN 21716 --- [customer-management-app] [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=8h50m34s707ms119µs400ns).
+2025-05-27T22:27:56.603+05:30  INFO 21716 --- [customer-management-app] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 13 class path changes (0 additions, 3 deletions, 10 modifications)
+2025-05-27T22:27:56.830+05:30  INFO 21716 --- [customer-management-app] [Thread-5] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-05-27T22:27:56.894+05:30  INFO 21716 --- [customer-management-app] [Thread-5] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-05-27T22:27:56.909+05:30  INFO 21716 --- [customer-management-app] [Thread-5] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

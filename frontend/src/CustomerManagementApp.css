@@ -256,3 +256,60 @@ body {
 .empty-message {
   color: #6b7280;
 }
+
+/* ===============================
+   CreateInvoice-specific styles
+   =============================== */
+
+.invoice-form .form-group {
+  margin-bottom: 12px;
+}
+
+.invoice-form .form-input[readonly] {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.invoice-table th,
+.invoice-table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.invoice-table thead {
+  background-color: #f9fafb;
+}
+
+.invoice-table input {
+  width: 100%;
+  padding: 4px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.add-product-btn,
+.remove-product-btn {
+  font-size: 14px;
+  padding: 4px 8px;
+  margin-top: 8px;
+  margin-right: 4px;
+  border-radius: 4px;
+}
+
+.grand-total {
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 16px;
+  text-align: right;
+}
+
+

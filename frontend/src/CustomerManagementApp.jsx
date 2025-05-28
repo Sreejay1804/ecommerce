@@ -3,210 +3,153 @@ import './CustomerManagementApp.css';
 import AddCustomer from './components/AddCustomer.jsx';
 import DeleteModifyCustomer from './components/DeleteModifyCustomer.jsx';
 import EnquireCustomer from './components/EnquireCustomer.jsx';
+import CreateInvoice from './components/CreateInvoice.jsx';
+import SearchInvoice from './components/SearchInvoice.jsx';
+import InvoiceModule from './components/InvoiceModule.jsx';
 
-
-
-const API_BASE_URL = 'http://localhost:8080/api/customers';
+const CUSTOMER_API = 'http://localhost:8080/api/customers';
+const INVOICE_API = 'http://localhost:8080/api/invoices';
 
 export default function CustomerManagementApp() {
-  const [showCustomerOptions, setShowCustomerOptions] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
   const [customers, setCustomers] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch all customers from backend
   const fetchCustomers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(API_BASE_URL);
-      if (!response.ok) {
-        throw new Error('Failed to fetch customers');
-      }
-      const data = await response.json();
+      const res = await fetch(CUSTOMER_API);
+      if (!res.ok) throw new Error('Failed to fetch customers');
+      const data = await res.json();
       setCustomers(data);
     } catch (err) {
+      console.error(err);
       setError(err.message);
-      console.error('Error fetching customers:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load customers on component mount
+  const fetchInvoices = async () => {
+    try {
+      const res = await fetch(INVOICE_API);
+      const data = await res.json();
+      setInvoices(data);
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
+    }
+  };
+
   useEffect(() => {
     fetchCustomers();
+    fetchInvoices();
   }, []);
 
-  // Add a new customer
-  const addCustomer = async (customerData) => {
+  const addCustomer = async (data) => {
     try {
-      const response = await fetch(API_BASE_URL, {
+      const res = await fetch(CUSTOMER_API, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(customerData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to add customer');
-      }
-      
-      const newCustomer = await response.json();
-      setCustomers([...customers, newCustomer]);
+      if (!res.ok) throw new Error('Failed to add customer');
+      const newCust = await res.json();
+      setCustomers([...customers, newCust]);
       return { success: true };
     } catch (err) {
-      console.error('Error adding customer:', err);
+      console.error(err);
       return { success: false, error: err.message };
     }
   };
 
-  // Update an existing customer
-  const updateCustomer = async (customerId, customerData) => {
+  const updateCustomer = async (id, data) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/${customerId}`, {
+      const res = await fetch(`${CUSTOMER_API}/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(customerData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update customer');
-      }
-      
-      const updatedCustomer = await response.json();
-      setCustomers(customers.map(customer => 
-        customer.id === customerId ? updatedCustomer : customer
-      ));
+      if (!res.ok) throw new Error('Failed to update customer');
+      const updated = await res.json();
+      setCustomers(customers.map(c => c.id === id ? updated : c));
       return { success: true };
     } catch (err) {
-      console.error('Error updating customer:', err);
+      console.error(err);
       return { success: false, error: err.message };
     }
   };
 
-  // Delete a customer
-  const deleteCustomer = async (customerId) => {
+  const deleteCustomer = async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/${customerId}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete customer');
-      }
-      
-      setCustomers(customers.filter(customer => customer.id !== customerId));
+      const res = await fetch(`${CUSTOMER_API}/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete customer');
+      setCustomers(customers.filter(c => c.id !== id));
       return { success: true };
     } catch (err) {
-      console.error('Error deleting customer:', err);
+      console.error(err);
       return { success: false, error: err.message };
     }
   };
 
-  // Search customers
-  const searchCustomers = async (searchTerm) => {
-    if (!searchTerm.trim()) {
-      return customers;
-    }
-    
+  const searchCustomers = async (term) => {
+    if (!term.trim()) return customers;
     try {
-      const response = await fetch(`${API_BASE_URL}/search?term=${encodeURIComponent(searchTerm)}`);
-      if (!response.ok) {
-        throw new Error('Failed to search customers');
-      }
-      const results = await response.json();
-      return results;
+      const res = await fetch(`${CUSTOMER_API}/search?term=${encodeURIComponent(term)}`);
+      if (!res.ok) throw new Error('Search failed');
+      return await res.json();
     } catch (err) {
-      console.error('Error searching customers:', err);
-      // Fallback to client-side search if backend search fails
-      const term = searchTerm.toLowerCase().trim();
-      return customers.filter(customer => 
-        customer.name.toLowerCase().includes(term) || 
-        customer.email.toLowerCase().includes(term)
+      console.error(err);
+      return customers.filter(c =>
+        c.name.toLowerCase().includes(term.toLowerCase()) ||
+        c.email.toLowerCase().includes(term.toLowerCase())
       );
     }
   };
 
-  const handleMenuNavigation = (menu) => {
-    setActiveMenu(menu);
-    setShowCustomerOptions(false);
-  };
-
-  const handleBackToOptions = () => {
-    setActiveMenu(null);
-    setShowCustomerOptions(true);
-  };
-
-  const renderContent = () => {
-    if (showCustomerOptions && !activeMenu) {
-      return (
-        <div className="options-container">
-          <h2 className="section-title">Customer Management Options</h2>
-          <div className="options-grid">
-            <button onClick={() => handleMenuNavigation('add')} className="btn btn-blue">
-              Add Customer
-            </button>
-            <button onClick={() => handleMenuNavigation('enquire')} className="btn btn-green">
-              Enquire Customer
-            </button>
-            <button onClick={() => handleMenuNavigation('delete')} className="btn btn-purple">
-              Delete or Modify Customer
-            </button>
-          </div>
-        </div>
-      );
+  const handleSaveInvoice = async (invoicePayload) => {
+    try {
+      const res = await fetch(INVOICE_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invoicePayload)
+      });
+      if (!res.ok) throw new Error('Failed to create invoice');
+      await fetchInvoices();
+      setActiveMenu('invoice');
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
     }
+  };
 
+  const renderPanel = () => {
     switch (activeMenu) {
       case 'add':
-        return (
-          <AddCustomer
-            onAddCustomer={addCustomer}
-            onUpdateCustomer={updateCustomer}
-            onBack={handleBackToOptions}
-            customers={customers}
-          />
-        );
+        return <AddCustomer onAddCustomer={addCustomer} onUpdateCustomer={updateCustomer} onBack={() => setActiveMenu(null)} customers={customers} />;
       case 'enquire':
-        return (
-          <EnquireCustomer
-            onSearchCustomers={searchCustomers}
-            onEditCustomer={(customer) => {
-              setActiveMenu('add');
-            }}
-            onDeleteCustomer={deleteCustomer}
-            onBack={handleBackToOptions}
-          />
-        );
+        return <EnquireCustomer onSearchCustomers={searchCustomers} onEditCustomer={() => setActiveMenu('add')} onDeleteCustomer={deleteCustomer} onBack={() => setActiveMenu(null)} />;
       case 'delete':
-        return (
-          <DeleteModifyCustomer
-            customers={customers}
-            onEditCustomer={(customer) => {
-              setActiveMenu('add');
-            }}
-            onDeleteCustomer={deleteCustomer}
-            onBack={handleBackToOptions}
-          />
-        );
+        return <DeleteModifyCustomer customers={customers} onEditCustomer={() => setActiveMenu('add')} onDeleteCustomer={deleteCustomer} onBack={() => setActiveMenu(null)} />;
+      case 'invoice':
+        return <InvoiceModule handleBack={() => setActiveMenu(null)} onCreate={() => setActiveMenu('createInvoice')} onSearch={() => setActiveMenu('searchInvoice')} />;
+      case 'createInvoice':
+        return <CreateInvoice handleBack={() => setActiveMenu('invoice')} customers={customers} onSave={handleSaveInvoice} />;
+      case 'searchInvoice':
+        return <SearchInvoice handleBack={() => setActiveMenu('invoice')} invoices={invoices} />;
       default:
         return (
-          <div className="content-panel">
-            <h2 className="section-title">Customer Management System</h2>
-            <p className="helper-text">Click the Customer button in the sidebar to get started.</p>
-            {error && (
-              <div className="error-message">
-                <p>Error: {error}</p>
-                <button onClick={fetchCustomers} className="btn btn-blue">
-                  Retry
-                </button>
-              </div>
-            )}
+          <div className="options-container">
+            <h2 className="section-title">Management Options</h2>
+            <div className="options-grid">
+              <button onClick={() => setActiveMenu('add')} className="btn btn-blue">Add Customer</button>
+              <button onClick={() => setActiveMenu('enquire')} className="btn btn-green">Enquire Customer</button>
+              <button onClick={() => setActiveMenu('delete')} className="btn btn-purple">Delete/Modify Customer</button>
+              <button onClick={() => setActiveMenu('invoice')} className="btn btn-blue">Invoice Module</button>
+            </div>
           </div>
         );
     }
@@ -220,32 +163,21 @@ export default function CustomerManagementApp() {
         </div>
         <div className="sidebar-content">
           <div className="sidebar-item">
-            <button
-              onClick={() => {
-                setShowCustomerOptions(!showCustomerOptions);
-                setActiveMenu(null);
-              }}
-              className="sidebar-button"
-            >
-              Customer
-            </button>
+            <button onClick={() => setActiveMenu(null)} className="sidebar-button">Customer</button>
+            <button onClick={() => setActiveMenu('invoice')} className="sidebar-button">Invoice</button>
           </div>
         </div>
       </div>
 
       <div className="main-container">
-        <main className="main-content">{renderContent()}</main>
+        <main className="main-content">{renderPanel()}</main>
 
         <div className="table-container">
           <h2 className="section-title">Customer List</h2>
-          {loading ? (
-            <p className="helper-text">Loading customers...</p>
-          ) : error ? (
+          {loading ? <p className="helper-text">Loading customers...</p> : error ? (
             <div className="error-message">
               <p>Error loading customers: {error}</p>
-              <button onClick={fetchCustomers} className="btn btn-blue">
-                Retry
-              </button>
+              <button onClick={fetchCustomers} className="btn btn-blue">Retry</button>
             </div>
           ) : customers.length > 0 ? (
             <div className="table-wrapper">
@@ -260,25 +192,15 @@ export default function CustomerManagementApp() {
                   </tr>
                 </thead>
                 <tbody>
-                  {customers.map((customer) => (
+                  {customers.map(customer => (
                     <tr key={customer.id}>
                       <td className="table-cell">{customer.name}</td>
                       <td className="table-cell">{customer.email}</td>
                       <td className="table-cell">{customer.phone}</td>
                       <td className="table-cell">{customer.address || 'N/A'}</td>
                       <td className="table-cell">
-                        <button
-                          onClick={() => handleMenuNavigation('add')}
-                          className="btn-link btn-blue-link"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => deleteCustomer(customer.id)}
-                          className="btn-link btn-red-link"
-                        >
-                          Delete
-                        </button>
+                        <button onClick={() => setActiveMenu('add')} className="btn-link btn-blue-link">Edit</button>
+                        <button onClick={() => deleteCustomer(customer.id)} className="btn-link btn-red-link">Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -286,9 +208,7 @@ export default function CustomerManagementApp() {
               </table>
             </div>
           ) : (
-            <p className="empty-message">
-              No customers available. Add a customer to see them listed here.
-            </p>
+            <p className="empty-message">No customers available. Add a customer to see them listed here.</p>
           )}
         </div>
       </div>
