@@ -1,9 +1,10 @@
 // components/CreateInvoice.jsx
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
 export default function CreateInvoice({ handleBack, customers }) {
+  // Invoice data state
   const [invoiceData, setInvoiceData] = useState({
     customerName: '',
     address: '',
@@ -12,31 +13,63 @@ export default function CreateInvoice({ handleBack, customers }) {
     dateTime: new Date().toISOString().slice(0, 16)
   });
 
+  // Products state - using itemName to match backend
   const [products, setProducts] = useState([
-    { sno: 1, itemName: '', category: '', quantity: '', unitPrice: '', cgst: '', sgst: '', tax: '', total: '' }
+    { 
+      sno: 1, 
+      itemName: '', 
+      category: '', 
+      quantity: '', 
+      unitPrice: '', 
+      cgst: '18', 
+      sgst: '18', 
+      tax: '', 
+      total: '' 
+    }
   ]);
 
+  // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Generate invoice number on component mount
-  useEffect(() => {
-    generateInvoiceNumber();
+  // Client-side invoice number generation fallback
+  const generateClientInvoiceNumber = useCallback(() => {
+    // Generate a random 6-digit number
+    const randomNum = Math.floor(100000 + Math.random() * 900000);
+    // Add current year and month for some context
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2); // Last 2 digits of year
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    return `INV-${year}${month}-${randomNum}`;
   }, []);
 
-  const generateInvoiceNumber = async () => {
+  // Generate invoice number (API or client-side)
+  const generateInvoiceNumber = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/invoices/generate-number`);
       if (response.ok) {
         const invoiceNumber = await response.text();
         setInvoiceData(prev => ({ ...prev, invoiceNo: invoiceNumber }));
+      } else {
+        // Fallback to client-side generation
+        const clientInvoiceNo = generateClientInvoiceNumber();
+        setInvoiceData(prev => ({ ...prev, invoiceNo: clientInvoiceNo }));
       }
     } catch (error) {
       console.error('Error generating invoice number:', error);
+      // Fallback to client-side generation
+      const clientInvoiceNo = generateClientInvoiceNumber();
+      setInvoiceData(prev => ({ ...prev, invoiceNo: clientInvoiceNo }));
     }
-  };
+  }, [generateClientInvoiceNumber]); // Add generateClientInvoiceNumber to dependency array
 
+  // Generate invoice number on component mount
+  useEffect(() => {
+    generateInvoiceNumber();
+  }, [generateInvoiceNumber]);
+
+  // Check if invoice number already exists
   const checkInvoiceNumberExists = async (invoiceNo) => {
     try {
       const response = await fetch(`${API_BASE_URL}/invoices/check-invoice-no?invoiceNo=${encodeURIComponent(invoiceNo)}`);
@@ -50,6 +83,7 @@ export default function CreateInvoice({ handleBack, customers }) {
     return false;
   };
 
+  // Handle invoice input changes
   const handleInvoiceInputChange = async (e) => {
     const { name, value } = e.target;
     setInvoiceData({ ...invoiceData, [name]: value });
@@ -65,17 +99,19 @@ export default function CreateInvoice({ handleBack, customers }) {
     }
   };
 
+  // Handle product field changes with auto-calculation
   const handleProductChange = (index, field, value) => {
     const updatedProducts = [...products];
     updatedProducts[index][field] = value;
 
-    // Auto-calculate totals when quantity, unit price, CGST, SGST change
-    if (['quantity', 'unitPrice', 'cgst', 'sgst'].includes(field)) {
+    // Auto-calculate totals when quantity or unit price changes
+    // CGST and SGST are fixed at 18% each
+    if (['quantity', 'unitPrice'].includes(field)) {
       const product = updatedProducts[index];
       const qty = parseFloat(product.quantity) || 0;
       const price = parseFloat(product.unitPrice) || 0;
-      const cgst = parseFloat(product.cgst) || 0;
-      const sgst = parseFloat(product.sgst) || 0;
+      const cgst = 18; // Fixed at 18%
+      const sgst = 18; // Fixed at 18%
 
       const subtotal = qty * price;
       const cgstAmount = (subtotal * cgst) / 100;
@@ -90,6 +126,7 @@ export default function CreateInvoice({ handleBack, customers }) {
     setProducts(updatedProducts);
   };
 
+  // Add new product row
   const addProductRow = () => {
     setProducts([...products, {
       sno: products.length + 1,
@@ -97,13 +134,14 @@ export default function CreateInvoice({ handleBack, customers }) {
       category: '',
       quantity: '',
       unitPrice: '',
-      cgst: '',
-      sgst: '',
+      cgst: '18',
+      sgst: '18',
       tax: '',
       total: ''
     }]);
   };
 
+  // Remove product row
   const removeProductRow = (index) => {
     if (products.length > 1) {
       const updatedProducts = products.filter((_, i) => i !== index);
@@ -115,6 +153,7 @@ export default function CreateInvoice({ handleBack, customers }) {
     }
   };
 
+  // Handle customer selection from dropdown
   const handleCustomerSelect = (e) => {
     const customerId = e.target.value;
     if (customerId) {
@@ -137,10 +176,12 @@ export default function CreateInvoice({ handleBack, customers }) {
     }
   };
 
+  // Calculate grand total
   const calculateGrandTotal = () => {
     return products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0).toFixed(2);
   };
 
+  // Form validation
   const validateForm = () => {
     const errors = [];
     
@@ -172,7 +213,7 @@ export default function CreateInvoice({ handleBack, customers }) {
     return errors;
   };
 
-  // FIXED: Function to prepare invoice items for backend with correct field names
+  // Prepare invoice items for backend
   const prepareInvoiceItems = () => {
     return products
       .filter(p => 
@@ -189,7 +230,6 @@ export default function CreateInvoice({ handleBack, customers }) {
         unitPrice: parseFloat(product.unitPrice),
         cgstRate: parseFloat(product.cgst) || 0,
         sgstRate: parseFloat(product.sgst) || 0,
-        // Backend will calculate these automatically
         cgstAmount: ((parseFloat(product.unitPrice) * parseInt(product.quantity)) * (parseFloat(product.cgst) || 0)) / 100,
         sgstAmount: ((parseFloat(product.unitPrice) * parseInt(product.quantity)) * (parseFloat(product.sgst) || 0)) / 100,
         taxAmount: parseFloat(product.tax) || 0,
@@ -197,6 +237,7 @@ export default function CreateInvoice({ handleBack, customers }) {
       }));
   };
 
+  // Save invoice to backend
   const handleSaveInvoice = async () => {
     setError('');
     setSuccess('');
@@ -210,7 +251,6 @@ export default function CreateInvoice({ handleBack, customers }) {
     setLoading(true);
 
     try {
-      // FIXED: Include invoice items in the payload with correct field names
       const invoicePayload = {
         customerName: invoiceData.customerName.trim(),
         customerAddress: invoiceData.address.trim(),
@@ -219,10 +259,10 @@ export default function CreateInvoice({ handleBack, customers }) {
         invoiceDate: new Date(invoiceData.dateTime).toISOString(),
         totalAmount: parseFloat(calculateGrandTotal()),
         paymentStatus: 'PENDING',
-        items: prepareInvoiceItems() // FIXED: Using correct field mapping
+        items: prepareInvoiceItems()
       };
 
-      console.log('Sending invoice payload:', invoicePayload); // Debug log
+      console.log('Sending invoice payload:', invoicePayload);
 
       const response = await fetch(`${API_BASE_URL}/invoices`, {
         method: 'POST',
@@ -242,7 +282,7 @@ export default function CreateInvoice({ handleBack, customers }) {
         }, 2000);
       } else {
         const errorData = await response.json();
-        console.error('Backend error response:', errorData); // Debug log
+        console.error('Backend error response:', errorData);
         setError(errorData.message || errorData.error || 'Failed to save invoice');
       }
     } catch (error) {
@@ -253,6 +293,7 @@ export default function CreateInvoice({ handleBack, customers }) {
     }
   };
 
+  // Reset form to initial state
   const resetForm = () => {
     setInvoiceData({
       customerName: '',
@@ -262,7 +303,7 @@ export default function CreateInvoice({ handleBack, customers }) {
       dateTime: new Date().toISOString().slice(0, 16)
     });
     setProducts([
-      { sno: 1, itemName: '', category: '', quantity: '', unitPrice: '', cgst: '', sgst: '', tax: '', total: '' }
+      { sno: 1, itemName: '', category: '', quantity: '', unitPrice: '', cgst: '18', sgst: '18', tax: '', total: '' }
     ]);
     generateInvoiceNumber();
     setError('');
@@ -311,7 +352,7 @@ export default function CreateInvoice({ handleBack, customers }) {
               disabled={loading}
             >
               <option value="">Select a customer or enter manually</option>
-              {customers.map(customer => (
+              {customers && customers.map(customer => (
                 <option key={customer.id} value={customer.id}>
                   {customer.name} - {customer.email}
                 </option>
@@ -470,26 +511,20 @@ export default function CreateInvoice({ handleBack, customers }) {
                   </td>
                   <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
                     <input
-                      type="number"
-                      value={product.cgst}
-                      onChange={(e) => handleProductChange(index, 'cgst', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '4px', fontSize: '14px' }}
-                      min="0"
-                      max="50"
-                      step="0.1"
-                      disabled={loading}
+                      type="text"
+                      value="18%"
+                      style={{ width: '100%', border: 'none', padding: '4px', fontSize: '14px', backgroundColor: '#f3f4f6', textAlign: 'center' }}
+                      disabled={true}
+                      readOnly
                     />
                   </td>
                   <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
                     <input
-                      type="number"
-                      value={product.sgst}
-                      onChange={(e) => handleProductChange(index, 'sgst', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '4px', fontSize: '14px' }}
-                      min="0"
-                      max="50"
-                      step="0.1"
-                      disabled={loading}
+                      type="text"
+                      value="18%"
+                      style={{ width: '100%', border: 'none', padding: '4px', fontSize: '14px', backgroundColor: '#f3f4f6', textAlign: 'center' }}
+                      disabled={true}
+                      readOnly
                     />
                   </td>
                   <td style={{ padding: '8px', border: '1px solid #e5e7eb', textAlign: 'right' }}>
@@ -551,14 +586,14 @@ export default function CreateInvoice({ handleBack, customers }) {
         </button>
         <button 
           onClick={resetForm}
-          className="btn btn-yellow"
+          className="btn btn-red"
           disabled={loading}
         >
           Reset
         </button>
         <button 
           onClick={handleSaveInvoice}
-          className="btn btn-primary"
+          className="btn btn-blue"
           disabled={loading}
         >
           {loading ? 'Saving...' : 'Save Invoice'}

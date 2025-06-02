@@ -211,12 +211,12 @@ body {
   color: #2563eb;
 }
 
-.btn-red-link {
-  color: #ef4444;
+.btn-red {
+  background-color: #ef4444;
 }
 
-.btn-red-link:hover {
-  color: #dc2626;
+.btn-red:hover {
+  background-color: #dc2626;
 }
 
 /* Table styles */
