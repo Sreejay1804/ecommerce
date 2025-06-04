@@ -2,6 +2,7 @@ package com.example.customermanagement.controller;
 
 import com.example.customermanagement.model.Invoice;
 import com.example.customermanagement.service.InvoiceService;
+import com.example.customermanagement.service.WhatsAppService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,6 +22,9 @@ public class InvoiceController {
 
     @Autowired
     private InvoiceService invoiceService;
+
+    @Autowired
+    private WhatsAppService whatsAppService;
 
     @GetMapping
     public ResponseEntity<List<Invoice>> getAllInvoices() {
@@ -153,6 +157,25 @@ public class InvoiceController {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @PostMapping("/{id}/send-whatsapp")
+    public ResponseEntity<?> sendWhatsAppNotification(@PathVariable Long id) {
+        try {
+            Invoice invoice = invoiceService.getInvoiceById(id);
+            if (invoice.getCustomerMobile() == null || invoice.getCustomerMobile().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Customer mobile number is required"));
+            }
+
+            boolean sent = whatsAppService.sendInvoiceNotification(invoice);
+            if (sent) {
+                return ResponseEntity.ok(Map.of("message", "WhatsApp notification sent successfully"));
+            } else {
+                return ResponseEntity.internalServerError().body(Map.of("error", "Failed to send WhatsApp notification"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 }

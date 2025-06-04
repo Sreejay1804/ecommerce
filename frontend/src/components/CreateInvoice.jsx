@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const API_BASE_URL = 'http://localhost:8080/api';
+const WHATSAPP_API_URL = `https://graph.facebook.com/v17.0/YOUR_PHONE_NUMBER_ID/messages`;
+const WHATSAPP_TOKEN = 'YOUR_ACCESS_TOKEN';
 
 export default function CreateInvoice({ handleBack, customers }) {
   // Helper function to get current local datetime for datetime-local input
@@ -44,6 +46,9 @@ export default function CreateInvoice({ handleBack, customers }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
+  const [whatsappSuccess, setWhatsappSuccess] = useState('');
+  const [whatsappError, setWhatsappError] = useState('');
 
   // Client-side invoice number generation fallback
   const generateClientInvoiceNumber = useCallback(() => {
@@ -764,6 +769,37 @@ export default function CreateInvoice({ handleBack, customers }) {
     setSuccess('');
   };
 
+  // Send invoice details via WhatsApp
+  const sendWhatsAppMessage = async () => {
+    if (!invoiceData.mobile) {
+      setWhatsappError('Mobile number is required');
+      return;
+    }
+
+    setWhatsappLoading(true);
+    setWhatsappError('');
+    setWhatsappSuccess('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/invoices/${savedInvoiceId}/send-whatsapp`, {
+        method: 'POST'
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setWhatsappSuccess('WhatsApp message sent successfully!');
+      } else {
+        throw new Error(data.error || 'Failed to send WhatsApp message');
+      }
+    } catch (error) {
+      console.error('WhatsApp Error:', error);
+      setWhatsappError(error.message);
+    } finally {
+      setWhatsappLoading(false);
+    }
+  };
+
   return (
     <div className="content-panel">
       <h2 className="section-title">Create Invoice</h2>
@@ -1082,6 +1118,18 @@ export default function CreateInvoice({ handleBack, customers }) {
           }}
         >
           {loading ? 'Saving & Printing...' : 'Save & Print'}
+        </button>
+        <button 
+          onClick={sendWhatsAppMessage}
+          className="btn"
+          disabled={loading || isGeneratingPDF || whatsappLoading || !invoiceData.mobile}
+          style={{ 
+            backgroundColor: whatsappLoading ? '#9ca3af' : '#25D366',
+            color: 'white',
+            cursor: whatsappLoading || !invoiceData.mobile ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {whatsappLoading ? 'Sending...' : 'Send WhatsApp'}
         </button>
       </div>  
     </div>
