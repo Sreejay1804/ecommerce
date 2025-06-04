@@ -4,13 +4,24 @@ import { useCallback, useEffect, useState } from 'react';
 const API_BASE_URL = 'http://localhost:8080/api';
 
 export default function CreateInvoice({ handleBack, customers }) {
+  // Helper function to get current local datetime for datetime-local input
+  const getCurrentLocalDateTime = () => {
+    const now = new Date();
+    // Get local time offset
+    const timezoneOffset = now.getTimezoneOffset() * 60000;
+    // Create local time
+    const localTime = new Date(now.getTime() - timezoneOffset);
+    // Return in the format required for datetime-local input (YYYY-MM-DDTHH:MM)
+    return localTime.toISOString().slice(0, 16);
+  };
+
   // Invoice data state
   const [invoiceData, setInvoiceData] = useState({
     customerName: '',
     address: '',
     mobile: '',
     invoiceNo: '',
-    dateTime: new Date().toISOString().slice(0, 16)
+    dateTime: getCurrentLocalDateTime() // Use local time instead of UTC
   });
 
   // Products state - using itemName to match backend
@@ -32,6 +43,7 @@ export default function CreateInvoice({ handleBack, customers }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Client-side invoice number generation fallback
   const generateClientInvoiceNumber = useCallback(() => {
@@ -181,6 +193,390 @@ export default function CreateInvoice({ handleBack, customers }) {
     return products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0).toFixed(2);
   };
 
+  // Calculate subtotal (before tax)
+  const calculateSubtotal = () => {
+    return products.reduce((sum, product) => {
+      const qty = parseFloat(product.quantity) || 0;
+      const price = parseFloat(product.unitPrice) || 0;
+      return sum + (qty * price);
+    }, 0).toFixed(2);
+  };
+
+  // Calculate total tax
+  const calculateTotalTax = () => {
+    return products.reduce((sum, product) => sum + (parseFloat(product.tax) || 0), 0).toFixed(2);
+  };
+
+  // Generate PDF Invoice
+  const generatePDFInvoice = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      // Create a new window for PDF content
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        throw new Error('Unable to open print window. Please allow popups.');
+      }
+
+      // Get valid products for PDF
+      const validProducts = products.filter(p => 
+        p.itemName.trim() && 
+        p.quantity && 
+        parseFloat(p.quantity) > 0 && 
+        p.unitPrice && 
+        parseFloat(p.unitPrice) > 0
+      );
+
+      if (validProducts.length === 0) {
+        setError('Please add at least one valid product to generate PDF');
+        printWindow.close();
+        return;
+      }
+
+      // Format date
+      const invoiceDate = new Date(invoiceData.dateTime);
+      const formattedDate = invoiceDate.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const formattedTime = invoiceDate.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      // Generate PDF HTML content
+      const pdfContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Invoice ${invoiceData.invoiceNo}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Arial', sans-serif;
+              font-size: 12px;
+              line-height: 1.4;
+              color: #333;
+              background: white;
+            }
+            
+            .invoice-container {
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 20px;
+              background: white;
+            }
+            
+            .invoice-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 2px solid #4f46e5;
+            }
+            
+            .company-info h1 {
+              color: #4f46e5;
+              font-size: 28px;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            
+            .company-info p {
+              color: #666;
+              font-size: 14px;
+            }
+            
+            .invoice-details {
+              text-align: right;
+            }
+            
+            .invoice-details h2 {
+              color: #4f46e5;
+              font-size: 24px;
+              margin-bottom: 10px;
+            }
+            
+            .invoice-details p {
+              margin-bottom: 5px;
+              font-size: 14px;
+            }
+            
+            .billing-section {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 30px;
+            }
+            
+            .billing-info {
+              flex: 1;
+              margin-right: 20px;
+            }
+            
+            .billing-info h3 {
+              color: #4f46e5;
+              font-size: 16px;
+              margin-bottom: 10px;
+              padding-bottom: 5px;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .billing-info p {
+              margin-bottom: 5px;
+              color: #555;
+            }
+            
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+              font-size: 11px;
+            }
+            
+            .items-table th {
+              background-color: #4f46e5;
+              color: white;
+              padding: 12px 8px;
+              text-align: left;
+              font-weight: bold;
+              border: 1px solid #4f46e5;
+            }
+            
+            .items-table td {
+              padding: 10px 8px;
+              border: 1px solid #e5e7eb;
+            }
+            
+            .items-table tbody tr:nth-child(even) {
+              background-color: #f9fafb;
+            }
+            
+            .items-table tbody tr:hover {
+              background-color: #f3f4f6;
+            }
+            
+            .text-right {
+              text-align: right;
+            }
+            
+            .text-center {
+              text-align: center;
+            }
+            
+            .totals-section {
+              display: flex;
+              justify-content: flex-end;
+              margin-bottom: 30px;
+            }
+            
+            .totals-table {
+              width: 300px;
+              border-collapse: collapse;
+            }
+            
+            .totals-table td {
+              padding: 8px 12px;
+              border: 1px solid #e5e7eb;
+            }
+            
+            .totals-table .label {
+              background-color: #f9fafb;
+              font-weight: bold;
+              text-align: right;
+              width: 60%;
+            }
+            
+            .totals-table .amount {
+              text-align: right;
+              width: 40%;
+            }
+            
+            .grand-total {
+              background-color: #4f46e5 !important;
+              color: white !important;
+              font-weight: bold;
+              font-size: 14px;
+            }
+            
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              color: #666;
+              font-size: 11px;
+            }
+            
+            .payment-terms {
+              margin-top: 20px;
+              padding: 15px;
+              background-color: #f8fafc;
+              border-radius: 5px;
+              border-left: 4px solid #4f46e5;
+            }
+            
+            .payment-terms h4 {
+              color: #4f46e5;
+              margin-bottom: 5px;
+            }
+            
+            @media print {
+              body {
+                margin: 0;
+                padding: 0;
+              }
+              
+              .invoice-container {
+                padding: 10px;
+                margin: 0;
+                max-width: none;
+              }
+              
+              .no-print {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-container">
+            <!-- Header -->
+            <div class="invoice-header">
+              <div class="company-info">
+                <h1>Your Company Name</h1>
+                <p>Your Company Address</p>
+                <p>City, State, PIN Code</p>
+                <p>Phone: +91 XXXXX XXXXX</p>
+                <p>Email: info@yourcompany.com</p>
+                <p>GST No: XXXXXXXXXXXXXXX</p>
+              </div>
+              <div class="invoice-details">
+                <h2>INVOICE</h2>
+                <p><strong>Invoice No:</strong> ${invoiceData.invoiceNo}</p>
+                <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Time:</strong> ${formattedTime}</p>
+              </div>
+            </div>
+            
+            <!-- Billing Information -->
+            <div class="billing-section">
+              <div class="billing-info">
+                <h3>Bill To:</h3>
+                <p><strong>${invoiceData.customerName}</strong></p>
+                ${invoiceData.address ? `<p>${invoiceData.address}</p>` : ''}
+                ${invoiceData.mobile ? `<p>Mobile: ${invoiceData.mobile}</p>` : ''}
+              </div>
+              <div class="billing-info">
+                <h3>Payment Status:</h3>
+                <p><strong style="color: #f59e0b;">PENDING</strong></p>
+              </div>
+            </div>
+            
+            <!-- Items Table -->
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th class="text-center" style="width: 8%;">S.No</th>
+                  <th style="width: 25%;">Item Description</th>
+                  <th style="width: 15%;">Category</th>
+                  <th class="text-center" style="width: 10%;">Qty</th>
+                  <th class="text-right" style="width: 12%;">Unit Price</th>
+                  <th class="text-center" style="width: 8%;">CGST%</th>
+                  <th class="text-center" style="width: 8%;">SGST%</th>
+                  <th class="text-right" style="width: 12%;">Tax Amount</th>
+                  <th class="text-right" style="width: 12%;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${validProducts.map((product, index) => `
+                  <tr>
+                    <td class="text-center">${index + 1}</td>
+                    <td>${product.itemName}</td>
+                    <td>${product.category || '-'}</td>
+                    <td class="text-center">${product.quantity}</td>
+                    <td class="text-right">₹${parseFloat(product.unitPrice).toFixed(2)}</td>
+                    <td class="text-center">18%</td>
+                    <td class="text-center">18%</td>
+                    <td class="text-right">₹${product.tax || '0.00'}</td>
+                    <td class="text-right"><strong>₹${product.total || '0.00'}</strong></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            <!-- Totals Section -->
+            <div class="totals-section">
+              <table class="totals-table">
+                <tr>
+                  <td class="label">Subtotal:</td>
+                  <td class="amount">₹${calculateSubtotal()}</td>
+                </tr>
+                <tr>
+                  <td class="label">Total Tax:</td>
+                  <td class="amount">₹${calculateTotalTax()}</td>
+                </tr>
+                <tr class="grand-total">
+                  <td class="label grand-total">Grand Total:</td>
+                  <td class="amount grand-total">₹${calculateGrandTotal()}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <!-- Payment Terms -->
+            <div class="payment-terms">
+              <h4>Payment Terms & Notes:</h4>
+              <p>• Payment is due within 30 days of invoice date.</p>
+              <p>• Please include invoice number with your payment.</p>
+              <p>• Thank you for your business!</p>
+            </div>
+            
+            <!-- Footer -->
+            <div class="footer">
+              <p>This is a computer-generated invoice and does not require a signature.</p>
+              <p>Generated on ${new Date().toLocaleDateString('en-IN')} at ${new Date().toLocaleTimeString('en-IN')}</p>
+            </div>
+          </div>
+          
+          <script>
+            // Auto-print when page loads
+            window.onload = function() {
+              window.print();
+            };
+            
+            // Close window after printing
+            window.onafterprint = function() {
+              window.close();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      // Write content to print window
+      printWindow.document.write(pdfContent);
+      printWindow.document.close();
+
+      // Focus on the print window
+      printWindow.focus();
+
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setError('Failed to generate PDF: ' + error.message);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   // Form validation
   const validateForm = () => {
     const errors = [];
@@ -256,6 +652,7 @@ export default function CreateInvoice({ handleBack, customers }) {
         customerAddress: invoiceData.address.trim(),
         customerMobile: invoiceData.mobile.trim(),
         invoiceNo: invoiceData.invoiceNo.trim(),
+        // Convert the datetime-local input to ISO string for backend
         invoiceDate: new Date(invoiceData.dateTime).toISOString(),
         totalAmount: parseFloat(calculateGrandTotal()),
         paymentStatus: 'PENDING',
@@ -293,6 +690,63 @@ export default function CreateInvoice({ handleBack, customers }) {
     }
   };
 
+  // Save and Print Invoice
+  const handleSaveAndPrint = async () => {
+    setError('');
+    setSuccess('');
+    
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join(', '));
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const invoicePayload = {
+        customerName: invoiceData.customerName.trim(),
+        customerAddress: invoiceData.address.trim(),
+        customerMobile: invoiceData.mobile.trim(),
+        invoiceNo: invoiceData.invoiceNo.trim(),
+        invoiceDate: new Date(invoiceData.dateTime).toISOString(),
+        totalAmount: parseFloat(calculateGrandTotal()),
+        paymentStatus: 'PENDING',
+        items: prepareInvoiceItems()
+      };
+
+      const response = await fetch(`${API_BASE_URL}/invoices`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(invoicePayload)
+      });
+
+      if (response.ok) {
+        const savedInvoice = await response.json();
+        setSuccess(`Invoice ${savedInvoice.invoiceNo} created successfully!`);
+        
+        // Generate PDF after successful save
+        await generatePDFInvoice();
+        
+        // Reset form after successful save and print
+        setTimeout(() => {
+          resetForm();
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        console.error('Backend error response:', errorData);
+        setError(errorData.message || errorData.error || 'Failed to save invoice');
+      }
+    } catch (error) {
+      console.error('Error saving invoice:', error);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Reset form to initial state
   const resetForm = () => {
     setInvoiceData({
@@ -300,7 +754,7 @@ export default function CreateInvoice({ handleBack, customers }) {
       address: '',
       mobile: '',
       invoiceNo: '',
-      dateTime: new Date().toISOString().slice(0, 16)
+      dateTime: getCurrentLocalDateTime() // Use local time when resetting
     });
     setProducts([
       { sno: 1, itemName: '', category: '', quantity: '', unitPrice: '', cgst: '18', sgst: '18', tax: '', total: '' }
@@ -567,6 +1021,15 @@ export default function CreateInvoice({ handleBack, customers }) {
           minWidth: '300px' 
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '14px' }}>Subtotal:</span>
+            <span style={{ fontSize: '14px' }}>₹{calculateSubtotal()}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '14px' }}>Total Tax:</span>
+            <span style={{ fontSize: '14px' }}>₹{calculateTotalTax()}</span>
+          </div>
+          <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Grand Total:</span>
             <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#059669' }}>
               ₹{calculateGrandTotal()}
@@ -580,25 +1043,47 @@ export default function CreateInvoice({ handleBack, customers }) {
         <button 
           onClick={handleBack}
           className="btn btn-gray"
-          disabled={loading}
+          disabled={loading || isGeneratingPDF}
         >
           Back
         </button>
         <button 
           onClick={resetForm}
           className="btn btn-red"
-          disabled={loading}
+          disabled={loading || isGeneratingPDF}
         >
           Reset
         </button>
         <button 
+          onClick={generatePDFInvoice}
+          className="btn btn-green"
+          disabled={loading || isGeneratingPDF}
+          style={{ 
+            backgroundColor: isGeneratingPDF ? '#9ca3af' : '#16a34a',
+            cursor: isGeneratingPDF ? 'wait' : 'pointer'
+          }}
+        >
+          {isGeneratingPDF ? 'Generating PDF...' : 'Print Preview'}
+        </button>
+        <button 
           onClick={handleSaveInvoice}
           className="btn btn-blue"
-          disabled={loading}
+          disabled={loading || isGeneratingPDF}
         >
           {loading ? 'Saving...' : 'Save Invoice'}
         </button>
-      </div>
+        <button 
+          onClick={handleSaveAndPrint}
+          className="btn btn-purple"
+          disabled={loading || isGeneratingPDF}
+          style={{ 
+            backgroundColor: loading ? '#9ca3af' : '#7c3aed',
+            cursor: loading ? 'wait' : 'pointer'
+          }}
+        >
+          {loading ? 'Saving & Printing...' : 'Save & Print'}
+        </button>
+      </div>  
     </div>
   );
 }
