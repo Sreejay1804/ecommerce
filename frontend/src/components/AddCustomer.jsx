@@ -66,23 +66,38 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
 
     // Check for duplicate email (only when adding new customer)
     if (!isEditing && customers) {
-      const emailExists = customers.some(customer => 
+      const emailExists = customers.some(customer =>
         customer.email.toLowerCase() === formData.email.toLowerCase()
       );
       if (emailExists) {
         errors.email = 'A customer with this email already exists';
         isValid = false;
       }
+      const phoneExists = customers.some(customer =>
+        customer.phone === formData.phone
+      );
+      if (phoneExists) {
+        errors.phone = 'A customer with this phone number already exists';
+        isValid = false;
+      }
     }
 
-    // Check for duplicate email when editing (exclude current customer)
+    // Check for duplicate email/phone when editing (exclude current customer)
     if (isEditing && customers && selectedCustomerId) {
-      const emailExists = customers.some(customer => 
-        customer.email.toLowerCase() === formData.email.toLowerCase() && 
+      const emailExists = customers.some(customer =>
+        customer.email.toLowerCase() === formData.email.toLowerCase() &&
         customer.id !== selectedCustomerId
       );
       if (emailExists) {
         errors.email = 'A customer with this email already exists';
+        isValid = false;
+      }
+      const phoneExists = customers.some(customer =>
+        customer.phone === formData.phone &&
+        customer.id !== selectedCustomerId
+      );
+      if (phoneExists) {
+        errors.phone = 'A customer with this phone number already exists';
         isValid = false;
       }
     }
@@ -151,10 +166,7 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
     setSubmitError('');
@@ -170,20 +182,28 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
 
       if (isEditing && selectedCustomerId !== null) {
         result = await onUpdateCustomer(selectedCustomerId, customerData);
+        if (result.success) {
+          alert('Customer updated successfully!');
+          // Clear edit mode and form after successful update
+          setIsEditing(false);
+          setSelectedCustomerId(null);
+          setFormData({ name: '', email: '', phone: '', address: '' });
+          // Remove edit parameter from URL
+          const url = new URL(window.location);
+          url.searchParams.delete('edit');
+          window.history.pushState(null, '', url);
+          // Return to customer list
+          onBack();
+        }
       } else {
         result = await onAddCustomer(customerData);
+        if (result.success) {
+          alert('Customer added successfully!');
+          setFormData({ name: '', email: '', phone: '', address: '' });
+        }
       }
 
-      if (result.success) {
-        // Reset form
-        setFormData({ name: '', email: '', phone: '', address: '' });
-        setFormErrors({ name: '', email: '', phone: '' });
-        setIsEditing(false);
-        setSelectedCustomerId(null);
-        
-        // Show success message or redirect
-        alert(isEditing ? 'Customer updated successfully!' : 'Customer added successfully!');
-      } else {
+      if (!result.success) {
         setSubmitError(result.error || 'An error occurred while saving the customer');
       }
     } catch (error) {
@@ -195,11 +215,17 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
   };
 
   const handleCancel = () => {
+    // Clear edit mode and form
     setFormData({ name: '', email: '', phone: '', address: '' });
     setFormErrors({ name: '', email: '', phone: '' });
     setIsEditing(false);
     setSelectedCustomerId(null);
     setSubmitError('');
+    // Remove edit parameter from URL
+    const url = new URL(window.location);
+    url.searchParams.delete('edit');
+    window.history.pushState(null, '', url);
+    // Return to previous screen
     onBack();
   };
 

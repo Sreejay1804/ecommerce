@@ -38,7 +38,7 @@ public class Customer {
     
     @NotBlank(message = "Phone is required")
     @Pattern(regexp = "^\\d{10}$", message = "Phone must be exactly 10 digits")
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, unique = true, length = 10)
     private String phone;
     
     @Size(max = 255, message = "Address must not exceed 255 characters")

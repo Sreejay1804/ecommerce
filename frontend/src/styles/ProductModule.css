@@ -1,0 +1,102 @@
+.product-module {
+    padding: 20px;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.content-panel {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.section-title {
+    color: #374151;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.customer-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.customer-table th,
+.customer-table td {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+}
+
+.customer-table th {
+    background-color: #f3f4f6;
+    font-weight: 600;
+    text-align: left;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.btn-blue {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-green {
+    background-color: #10b981;
+    color: white;
+}
+
+.btn-purple {
+    background-color: #8b5cf6;
+    color: white;
+}
+
+.btn-red {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.btn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+}
