@@ -6,13 +6,14 @@ const API_BASE_URL = 'http://localhost:8080/api';
 export default function CreateInvoice({ handleBack, customers, products = [], onSave }) { // Add products and onSave prop
   // Helper function to get current local datetime for datetime-local input
   const getCurrentLocalDateTime = () => {
+    // Create a date object for current time
     const now = new Date();
-    // Get local time offset
-    const timezoneOffset = now.getTimezoneOffset() * 60000;
-    // Create local time
-    const localTime = new Date(now.getTime() - timezoneOffset);
-    // Return in the format required for datetime-local input (YYYY-MM-DDTHH:MM)
-    return localTime.toISOString().slice(0, 16);
+    
+    // Convert to IST (UTC+5:30)
+    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    
+    // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+    return istTime.toISOString().slice(0, 16);
   };
 
   // Invoice data state
@@ -21,7 +22,7 @@ export default function CreateInvoice({ handleBack, customers, products = [], on
     address: '',
     mobile: '',
     invoiceNo: '',
-    dateTime: getCurrentLocalDateTime() // Use local time instead of UTC
+    dateTime: getCurrentLocalDateTime() // This will now be in IST
   });
 
   // Products state - using itemName to match backend
@@ -775,6 +776,20 @@ export default function CreateInvoice({ handleBack, customers, products = [], on
     setError('');
     setSuccess('');
   };
+
+  // Add a useEffect to update time automatically
+  useEffect(() => {
+    // Update time every minute
+    const timer = setInterval(() => {
+      setInvoiceData(prev => ({
+        ...prev,
+        dateTime: getCurrentLocalDateTime()
+      }));
+    }, 60000); // Update every minute
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="content-panel">
