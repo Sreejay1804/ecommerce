@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function EnquireCustomer({ onSearchCustomers, onEditCustomer, onDeleteCustomer, onBack }) {
+export default function EnquireCustomer({ onSearchCustomers, onBack }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -53,37 +53,6 @@ export default function EnquireCustomer({ onSearchCustomers, onEditCustomer, onD
     setSearchResults([]);
     setHasSearched(false);
     setSearchError('');
-  };
-
-  const handleEditCustomer = (customer) => {
-    // Update URL to include edit parameter
-    const url = new URL(window.location);
-    url.searchParams.set('edit', customer.id);
-    window.history.pushState(null, '', url);
-    
-    onEditCustomer(customer);
-  };
-
-  const handleDeleteCustomer = async (customer) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete ${customer.name}? This action cannot be undone.`
-    );
-    
-    if (confirmDelete) {
-      try {
-        const result = await onDeleteCustomer(customer.id);
-        if (result.success) {
-          // Remove deleted customer from search results
-          setSearchResults(searchResults.filter(c => c.id !== customer.id));
-          alert('Customer deleted successfully!');
-        } else {
-          alert('Failed to delete customer: ' + (result.error || 'Unknown error'));
-        }
-      } catch (error) {
-        alert('An error occurred while deleting the customer');
-        console.error('Delete error:', error);
-      }
-    }
   };
 
   return (
@@ -154,7 +123,6 @@ export default function EnquireCustomer({ onSearchCustomers, onEditCustomer, onD
                     <th className="table-header">Email</th>
                     <th className="table-header">Phone</th>
                     <th className="table-header">Address</th>
-                    <th className="table-header">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -167,22 +135,6 @@ export default function EnquireCustomer({ onSearchCustomers, onEditCustomer, onD
                       <td className="table-cell">{customer.phone}</td>
                       <td className="table-cell">
                         {customer.address || 'No address provided'}
-                      </td>
-                      <td className="table-cell">
-                        <button
-                          onClick={() => handleEditCustomer(customer)}
-                          className="btn-link btn-blue-link"
-                          title="Edit customer"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCustomer(customer)}
-                          className="btn-link btn-red-link"
-                          title="Delete customer"
-                        >
-                          Delete
-                        </button>
                       </td>
                     </tr>
                   ))}

@@ -1,34 +1,66 @@
 // components/SearchInvoice.jsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [viewMode, setViewMode] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  const handleSearch = async () => {
-    const term = searchTerm.trim();
+  // Load all invoices when component mounts
+  useEffect(() => {
+    fetchAllInvoices();
+  }, []);
+
+  // Fetch all invoices
+  const fetchAllInvoices = async () => {
+    setLoading(true);
+    setError('');
     try {
-      let response, data;
-      if (!term) {
-        // Fetch all invoices if no search term
-        response = await fetch('http://localhost:8080/api/invoices');
-        if (!response.ok) throw new Error('Failed to fetch invoices');
-        data = await response.json();
-      } else {
-        response = await fetch(`http://localhost:8080/api/invoices/search?term=${encodeURIComponent(term)}`);
-        if (!response.ok) throw new Error('Failed to search invoices');
-        data = await response.json();
-      }
+      const response = await fetch('http://localhost:8080/api/invoices');
+      if (!response.ok) throw new Error('Failed to fetch invoices');
+      const data = await response.json();
       setSearchResults(data);
+      setHasSearched(true);
     } catch (err) {
-      console.error(err);
+      console.error('Error:', err);
+      setError('Failed to fetch invoices');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const term = searchTerm.trim();
+      let response;
+      
+      if (!term) {
+        // If no search term, fetch all invoices
+        response = await fetch('http://localhost:8080/api/invoices');
+      } else {
+        // If there's a search term, use the search endpoint
+        response = await fetch(`http://localhost:8080/api/invoices/search?term=${encodeURIComponent(term)}`);
+      }
+
+      if (!response.ok) throw new Error('Failed to fetch invoices');
+      
+      const data = await response.json();
+      setSearchResults(data);
+      setHasSearched(true);
+    } catch (err) {
+      console.error('Search error:', err);
+      setError(err.message);
       setSearchResults([]);
     } finally {
-      setHasSearched(true);
+      setLoading(false);
     }
   };
 
@@ -577,23 +609,40 @@ export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu
       <p className="helper-text">Search for invoices by invoice number, customer name, or mobile number</p>
 
       <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search by invoice number, customer name, or mobile..."
-          className="form-input"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ marginBottom: '16px' }}
-        />
+        <div className="form-group">
+          <input
+            type="text"
+            placeholder="Search by invoice number, customer name, or mobile..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="form-input"
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+        </div>
         <div className="button-group">
-          <button onClick={handleSearch} className="btn btn-blue">Search</button>
-          <button onClick={() => { handleBack(); setActiveMenu('searchInvoice'); }} className="btn btn-gray">Back</button>
+          <button 
+            onClick={handleSearch} 
+            className="btn btn-blue" 
+            disabled={loading}
+          >
+            {loading ? 'Searching...' : 'Search'}
+          </button>
+          <button onClick={handleBack} className="btn btn-gray">
+            Back
+          </button>
         </div>
       </div>
 
-      {hasSearched && (
-        <div className="search-results" style={{ marginTop: '24px' }}>
-          <h3 className="section-subtitle">Search Results</h3>
+      {error && (
+        <div className="error-message" style={{ margin: '20px 0' }}>
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="loading-message">Loading invoices...</div>
+      ) : hasSearched && (
+        <div className="search-results">
           {searchResults.length > 0 ? (
             <div className="table-wrapper">
               <table className="customer-table">
@@ -604,36 +653,40 @@ export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu
                     <th>Mobile</th>
                     <th>Date</th>
                     <th>Total Amount</th>
+                    <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {searchResults.map(invoice => (
+                  {searchResults.map((invoice) => (
                     <tr key={invoice.id}>
                       <td>{invoice.invoiceNo}</td>
                       <td>{invoice.customerName}</td>
                       <td>{invoice.customerMobile}</td>
                       <td>{new Date(invoice.invoiceDate).toLocaleDateString()}</td>
                       <td>₹{invoice.totalAmount.toFixed(2)}</td>
+                      <td>{invoice.paymentStatus}</td>
                       <td>
-                        <button 
-                          className="btn-link btn-blue-link" 
-                          onClick={() => handleViewInvoice(invoice.id)}
-                        >
-                          View
-                        </button>
-                        <button 
-                          className="btn-link btn-blue-link" 
-                          onClick={() => handleEditInvoice(invoice.id)}
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          className="btn-link btn-red-link" 
-                          onClick={() => handleDeleteInvoice(invoice.id)}
-                        >
-                          Delete
-                        </button>
+                        <div className="button-group">
+                          <button 
+                            onClick={() => handleViewInvoice(invoice.id)} 
+                            className="btn-link btn-blue-link"
+                          >
+                            View
+                          </button>
+                          <button 
+                            onClick={() => handleEditInvoice(invoice.id)} 
+                            className="btn-link btn-blue-link"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteInvoice(invoice.id)} 
+                            className="btn-link btn-red-link"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -641,7 +694,7 @@ export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu
               </table>
             </div>
           ) : (
-            <p className="empty-message">No matching invoices found.</p>
+            <p className="empty-message">No invoices found.</p>
           )}
         </div>
       )}

@@ -218,9 +218,25 @@ export default function CustomerManagementApp() {
   const renderPanel = () => {
     switch (activeMenu) {
       case 'add':
-        return <AddCustomer onAddCustomer={addCustomer} onUpdateCustomer={updateCustomer} onBack={() => setActiveMenu(null)} customers={customers} />;
+        return (
+          <AddCustomer 
+            onAddCustomer={addCustomer} 
+            onUpdateCustomer={updateCustomer} 
+            onBack={() => {
+              setActiveMenu(null);
+              // Remove edit parameter from URL
+              const url = new URL(window.location);
+              url.searchParams.delete('edit');
+              window.history.pushState(null, '', url);
+            }} 
+            customers={customers}
+          />
+        );
       case 'enquire':
-        return <EnquireCustomer onSearchCustomers={searchCustomers} onEditCustomer={() => setActiveMenu('add')} onDeleteCustomer={deleteCustomer} onBack={() => setActiveMenu(null)} />;
+        return <EnquireCustomer 
+          onSearchCustomers={searchCustomers} 
+          onBack={() => setActiveMenu(null)} 
+        />;
       case 'delete':
         return <DeleteModifyCustomer customers={customers} onEditCustomer={() => setActiveMenu('add')} onDeleteCustomer={deleteCustomer} onBack={() => setActiveMenu(null)} />;
       case 'invoice':
@@ -284,7 +300,6 @@ export default function CustomerManagementApp() {
   };
 
   const renderCustomerList = () => {
-    // Only render customer list if we're in the customer module (activeMenu is null)
     if (activeMenu !== null) return null;
 
     return (
@@ -318,13 +333,13 @@ export default function CustomerManagementApp() {
                     <td>{customer.address || 'N/A'}</td>
                     <td>
                       <button 
-                        onClick={() => setActiveMenu('add')} 
+                        onClick={() => handleEditFromList(customer)} 
                         className="btn-link btn-blue-link"
                       >
                         Edit
                       </button>
                       <button 
-                        onClick={() => deleteCustomer(customer.id)} 
+                        onClick={() => handleDeleteFromList(customer)} 
                         className="btn-link btn-red-link"
                       >
                         Delete
@@ -340,6 +355,36 @@ export default function CustomerManagementApp() {
         )}
       </div>
     );
+  };
+
+  const handleEditFromList = (customer) => {
+    // Update URL to include edit parameter
+    const url = new URL(window.location);
+    url.searchParams.set('edit', customer.id);
+    window.history.pushState(null, '', url);
+    
+    // Switch to edit mode
+    setActiveMenu('add');
+  };
+
+  const handleDeleteFromList = async (customer) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${customer.name}?`
+    );
+    
+    if (confirmDelete) {
+      try {
+        const result = await deleteCustomer(customer.id);
+        if (result.success) {
+          alert('Customer deleted successfully!');
+        } else {
+          alert('Failed to delete customer: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('An error occurred while deleting the customer');
+        console.error('Delete error:', error);
+      }
+    }
   };
 
   return (

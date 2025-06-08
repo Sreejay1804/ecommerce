@@ -17,18 +17,28 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Check if we're editing a customer from URL params or external trigger
+  // Update the useEffect hook that handles edit mode
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
+    
     if (editId && customers) {
       const customerToEdit = customers.find(c => c.id.toString() === editId);
       if (customerToEdit) {
-        handleEditCustomer(customerToEdit);
+        setFormData({
+          name: customerToEdit.name,
+          email: customerToEdit.email,
+          phone: customerToEdit.phone,
+          address: customerToEdit.address || ''
+        });
+        setSelectedCustomerId(customerToEdit.id);
+        setIsEditing(true);
+        setFormErrors({ name: '', email: '', phone: '' });
       }
     }
   }, [customers]);
 
+  // Update the validateForm function
   const validateForm = () => {
     let isValid = true;
     const errors = {
@@ -64,7 +74,7 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
       isValid = false;
     }
 
-    // Check for duplicate email (only when adding new customer)
+    // Check for duplicate email and phone only when adding new customer
     if (!isEditing && customers) {
       const emailExists = customers.some(customer =>
         customer.email.toLowerCase() === formData.email.toLowerCase()
@@ -82,7 +92,7 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
       }
     }
 
-    // Check for duplicate email/phone when editing (exclude current customer)
+    // Check only for duplicate email when editing (exclude current customer)
     if (isEditing && customers && selectedCustomerId) {
       const emailExists = customers.some(customer =>
         customer.email.toLowerCase() === formData.email.toLowerCase() &&
@@ -90,14 +100,6 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
       );
       if (emailExists) {
         errors.email = 'A customer with this email already exists';
-        isValid = false;
-      }
-      const phoneExists = customers.some(customer =>
-        customer.phone === formData.phone &&
-        customer.id !== selectedCustomerId
-      );
-      if (phoneExists) {
-        errors.phone = 'A customer with this phone number already exists';
         isValid = false;
       }
     }
