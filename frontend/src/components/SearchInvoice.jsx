@@ -1,613 +1,530 @@
-// components/SearchInvoice.jsx
 import { useEffect, useState } from 'react';
 
-export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu }) {
+export default function SearchInvoice({ handleBack }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [viewMode, setViewMode] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
-  // Load all invoices when component mounts
+  // Initial load of all invoices
   useEffect(() => {
     fetchAllInvoices();
   }, []);
 
-  // Fetch all invoices
   const fetchAllInvoices = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8080/api/invoices');
-      if (!response.ok) throw new Error('Failed to fetch invoices');
-      const data = await response.json();
-      setSearchResults(data);
-      setHasSearched(true);
-    } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to fetch invoices');
-    } finally {
-      setLoading(false);
-    }
-  };
+      const response = await fetch('http://localhost:8080/api/invoices', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
 
-  const handleSearch = async () => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const term = searchTerm.trim();
-      let response;
-      
-      if (!term) {
-        // If no search term, fetch all invoices
-        response = await fetch('http://localhost:8080/api/invoices');
-      } else {
-        // If there's a search term, use the search endpoint
-        response = await fetch(`http://localhost:8080/api/invoices/search?term=${encodeURIComponent(term)}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch invoices');
       }
 
-      if (!response.ok) throw new Error('Failed to fetch invoices');
-      
       const data = await response.json();
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid data received from server');
+      }
+
       setSearchResults(data);
       setHasSearched(true);
     } catch (err) {
-      console.error('Search error:', err);
-      setError(err.message);
+      console.error('Error fetching invoices:', err);
+      setError(err.message || 'Failed to fetch invoices');
       setSearchResults([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteInvoice = async (invoiceId) => {
-    if (window.confirm('Are you sure you want to delete this invoice?')) {
-      try {
-        const response = await fetch(`http://localhost:8080/api/invoices/${invoiceId}`, {
-          method: 'DELETE'
-        });
-        if (!response.ok) throw new Error('Failed to delete invoice');
-        setSearchResults(prev => prev.filter(i => i.id !== invoiceId));
-        alert('Invoice deleted successfully!');
-      } catch (err) {
-        console.error(err);
-        alert('Failed to delete invoice');
-      }
-    }
-  };
-
-  const handleViewInvoice = async (invoiceId) => {
+  // Update handleSearch function with better error handling
+  const handleSearch = async () => {
+    setLoading(true);
+    setError('');
+    
     try {
-      const response = await fetch(`http://localhost:8080/api/invoices/${invoiceId}`);
-      if (!response.ok) throw new Error('Failed to fetch invoice details');
-      const data = await response.json();
-      setSelectedInvoice(data);
-      setViewMode(true);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to fetch invoice details');
-    }
-  };
+      const term = searchTerm.trim();
+      const url = term ? 
+        `http://localhost:8080/api/invoices/search?term=${encodeURIComponent(term)}` :
+        'http://localhost:8080/api/invoices';
 
-  const handleEditInvoice = async (invoiceId) => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/invoices/${invoiceId}`);
-      if (!response.ok) throw new Error('Failed to fetch invoice details');
-      const data = await response.json();
-      setSelectedInvoice(data);
-      setEditMode(true);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to fetch invoice details');
-    }
-  };
-
-  const handleUpdateInvoice = async (updatedInvoice) => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/invoices/${updatedInvoice.id}`, {
-        method: 'PUT',
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedInvoice)
+          'Accept': 'application/json'
+        }
       });
 
-      if (!response.ok) throw new Error('Failed to update invoice');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch invoices');
+      }
+
       const data = await response.json();
-      
-      setSearchResults(prev => 
-        prev.map(inv => inv.id === data.id ? data : inv)
-      );
-      setEditMode(false);
-      setSelectedInvoice(null);
-      alert('Invoice updated successfully!');
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid data received from server');
+      }
+
+      setSearchResults(data);
+      setHasSearched(true);
     } catch (err) {
-      console.error(err);
-      alert('Failed to update invoice');
+      console.error('Search error:', err);
+      setError(err.message || 'Failed to search invoices');
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const InvoiceDetails = ({ invoice }) => (
-    <div className="invoice-details">
-      <h3>Invoice Details</h3>
-      <div className="invoice-header">
-        <div className="invoice-info">
-          <p><strong>Invoice No:</strong> {invoice.invoiceNo}</p>
-          <p><strong>Date:</strong> {new Date(invoice.invoiceDate).toLocaleDateString()}</p>
-        </div>
-        <div className="customer-info">
-          <p><strong>Customer Name:</strong> {invoice.customerName}</p>
-          <p><strong>Mobile:</strong> {invoice.customerMobile}</p>
-          <p><strong>Address:</strong> {invoice.customerAddress}</p>
-        </div>
-      </div>
+  // Update the handleView function
+  const handleView = async (invoice) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/invoices/${invoice.id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
 
-      <div className="items-table">
-        <h4>Items</h4>
-        <table>
-          <thead>
-            <tr>
-              <th>Item Name</th>
-              <th>Category</th>
-              <th>Quantity</th>
-              <th>Unit Price</th>
-              <th>CGST (%)</th>
-              <th>SGST (%)</th>
-              <th>Tax Amount</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.items.map((item, index) => (
-              <tr key={index}>
-                <td>{item.itemName}</td>
-                <td>{item.itemCategory}</td>
-                <td>{item.quantity}</td>
-                <td>₹{item.unitPrice.toFixed(2)}</td>
-                <td>{item.cgstRate}%</td>
-                <td>{item.sgstRate}%</td>
-                <td>₹{item.taxAmount.toFixed(2)}</td>
-                <td>₹{item.totalPrice.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      if (!response.ok) throw new Error('Failed to fetch invoice details');
+      const invoiceData = await response.json();
+      setSelectedInvoice(invoiceData);
+    } catch (err) {
+      console.error('Error viewing invoice:', err);
+      alert('Failed to view invoice: ' + err.message);
+    }
+  };
 
-      <div className="invoice-summary">
-        <p><strong>Sub Total:</strong> ₹{invoice.items.reduce((sum, item) => 
-          sum + (item.quantity * item.unitPrice), 0).toFixed(2)}</p>
-        <p><strong>Total Tax:</strong> ₹{invoice.items.reduce((sum, item) => 
-          sum + item.taxAmount, 0).toFixed(2)}</p>
-        <p><strong>Grand Total:</strong> ₹{invoice.totalAmount.toFixed(2)}</p>
-        <p><strong>Payment Status:</strong> {invoice.paymentStatus}</p>
-      </div>
-
-      <div className="button-group">
-        <button onClick={() => setViewMode(false)} className="btn btn-gray">Back to Search</button>
-        <button onClick={() => window.print()} className="btn btn-blue">Print Invoice</button>
-      </div>
-    </div>
-  );
-
-  const InvoiceForm = ({ invoice, onSave, onCancel }) => {
-    const [formData, setFormData] = useState({ ...invoice });
-
-    const handleChange = (e) => {
-      const { name, value } = e.target;
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    };
-
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      onSave(formData);
-    };
-
+  // Add this component for invoice details view
+  const InvoiceDetails = ({ invoice, onClose }) => {
+    const formattedDate = new Date(invoice.invoiceDate).toLocaleDateString('en-IN');
+    
     return (
-      <form onSubmit={handleSubmit} className="invoice-form">
-        <h3>{invoice.id ? 'Edit Invoice' : 'New Invoice'}</h3>
-        <div className="form-group">
-          <label>Invoice No</label>
-          <input 
-            type="text" 
-            name="invoiceNo" 
-            value={formData.invoiceNo} 
-            onChange={handleChange} 
-            className="form-input"
-            readOnly={!!invoice.id}
-          />
-        </div>
-        <div className="form-group">
-          <label>Customer Name</label>
-          <input 
-            type="text" 
-            name="customerName" 
-            value={formData.customerName} 
-            onChange={handleChange} 
-            className="form-input"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Mobile</label>
-          <input 
-            type="text" 
-            name="customerMobile" 
-            value={formData.customerMobile} 
-            onChange={handleChange} 
-            className="form-input"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Address</label>
-          <textarea 
-            name="customerAddress" 
-            value={formData.customerAddress} 
-            onChange={handleChange} 
-            className="form-input"
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Items</label>
-          {formData.items.map((item, index) => (
-            <div key={index} className="item-row">
-              <input 
-                type="text" 
-                name="itemName" 
-                value={item.itemName} 
-                onChange={e => {
-                  const newItems = [...formData.items];
-                  newItems[index].itemName = e.target.value;
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="form-input"
-                placeholder="Item Name"
-                required
-              />
-              <input 
-                type="text" 
-                name="itemCategory" 
-                value={item.itemCategory} 
-                onChange={e => {
-                  const newItems = [...formData.items];
-                  newItems[index].itemCategory = e.target.value;
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="form-input"
-                placeholder="Category"
-                required
-              />
-              <input 
-                type="number" 
-                name="quantity" 
-                value={item.quantity} 
-                onChange={e => {
-                  const newItems = [...formData.items];
-                  newItems[index].quantity = parseFloat(e.target.value);
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="form-input"
-                placeholder="Quantity"
-                required
-              />
-              <input 
-                type="number" 
-                name="unitPrice" 
-                value={item.unitPrice} 
-                onChange={e => {
-                  const newItems = [...formData.items];
-                  newItems[index].unitPrice = parseFloat(e.target.value);
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="form-input"
-                placeholder="Unit Price"
-                required
-              />
-              <input 
-                type="number" 
-                name="cgstRate" 
-                value={item.cgstRate} 
-                onChange={e => {
-                  const newItems = [...formData.items];
-                  newItems[index].cgstRate = parseFloat(e.target.value);
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="form-input"
-                placeholder="CGST (%)"
-                required
-              />
-              <input 
-                type="number" 
-                name="sgstRate" 
-                value={item.sgstRate} 
-                onChange={e => {
-                  const newItems = [...formData.items];
-                  newItems[index].sgstRate = parseFloat(e.target.value);
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="form-input"
-                placeholder="SGST (%)"
-                required
-              />
-              <input 
-                type="number" 
-                name="taxAmount" 
-                value={item.taxAmount} 
-                onChange={e => {
-                  const newItems = [...formData.items];
-                  newItems[index].taxAmount = parseFloat(e.target.value);
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="form-input"
-                placeholder="Tax Amount"
-                required
-              />
-              <input 
-                type="number" 
-                name="totalPrice" 
-                value={item.totalPrice} 
-                onChange={e => {
-                  const newItems = [...formData.items];
-                  newItems[index].totalPrice = parseFloat(e.target.value);
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="form-input"
-                placeholder="Total"
-                required
-              />
-              <button 
-                type="button" 
-                onClick={() => {
-                  const newItems = formData.items.filter((_, i) => i !== index);
-                  setFormData(prev => ({ ...prev, items: newItems }));
-                }} 
-                className="btn btn-red"
-                style={{ marginLeft: '8px' }}
-              >
-                Remove
-              </button>
+      <div className="invoice-details-modal">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h2>Invoice Details</h2>
+            <button onClick={onClose} className="close-btn">&times;</button>
+          </div>
+          
+          <div className="invoice-container">
+            <div className="invoice-header">
+              <div className="invoice-info">
+                <p><strong>Invoice No:</strong> {invoice.invoiceNo}</p>
+                <p><strong>Date:</strong> {formattedDate}</p>
+              </div>
             </div>
-          ))}
-          <button 
-            type="button" 
-            onClick={() => {
-              setFormData(prev => ({
-                ...prev,
-                items: [...prev.items, {
-                  itemName: '',
-                  itemCategory: '',  // Changed from itemDescription to itemCategory
-                  quantity: 1,
-                  unitPrice: 0,
-                  cgstRate: 0,
-                  sgstRate: 0,
-                  taxAmount: 0,
-                  totalPrice: 0
-                }]
-              }));
-            }} 
-            className="btn btn-green"
-            style={{ marginTop: '8px' }}
-          >
-            Add Item
-          </button>
-        </div>
 
-        <div className="form-group">
-          <label>Payment Status</label>
-          <select 
-            name="paymentStatus" 
-            value={formData.paymentStatus} 
-            onChange={handleChange} 
-            className="form-input"
-            required
-          >
-            <option value="">Select Status</option>
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-        </div>
+            <div className="customer-info">
+              <h3>Customer Details</h3>
+              <p><strong>Name:</strong> {invoice.customerName}</p>
+              <p><strong>Mobile:</strong> {invoice.customerMobile || 'N/A'}</p>
+              <p><strong>Address:</strong> {invoice.customerAddress || 'N/A'}</p>
+            </div>
 
-        <div className="button-group">
-          <button type="submit" className="btn btn-blue">
-            {invoice.id ? 'Update Invoice' : 'Create Invoice'}
-          </button>
-          <button onClick={onCancel} className="btn btn-gray">Cancel</button>
+            <table className="items-table">
+              <thead>
+                <tr>
+                  <th>Item Name</th>
+                  <th>Category</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>CGST</th>
+                  <th>SGST</th>
+                  <th>Tax Amount</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.itemName}</td>
+                    <td>{item.category || '-'}</td>
+                    <td>{item.quantity}</td>
+                    <td>₹{item.unitPrice.toFixed(2)}</td>
+                    <td>{item.cgstRate}%</td>
+                    <td>{item.sgstRate}%</td>
+                    <td>₹{item.taxAmount.toFixed(2)}</td>
+                    <td>₹{item.totalPrice.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="totals-section">
+              <p><strong>Subtotal:</strong> ₹{(invoice.totalAmount - invoice.items.reduce((sum, item) => sum + item.taxAmount, 0)).toFixed(2)}</p>
+              <p><strong>Total Tax:</strong> ₹{invoice.items.reduce((sum, item) => sum + item.taxAmount, 0).toFixed(2)}</p>
+              <p><strong>Grand Total:</strong> ₹{invoice.totalAmount.toFixed(2)}</p>
+            </div>
+          </div>
         </div>
-      </form>
+      </div>
     );
   };
 
-  const EditInvoice = ({ invoice }) => {
-    const [editedInvoice, setEditedInvoice] = useState({ ...invoice });
+  // Add these styles to your CSS
+  const styles = `
+    .invoice-details-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
 
-    const handleInputChange = (e, field) => {
-      setEditedInvoice(prev => ({
-        ...prev,
-        [field]: e.target.value
-      }));
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 1000px;
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0 8px;
+    }
+
+    .invoice-container {
+      padding: 20px;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    .items-table th,
+    .items-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .items-table th {
+      background-color: #4f46e5;
+      color: white;
+    }
+
+    .totals-section {
+      margin-top: 20px;
+      text-align: right;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    select.form-input {
+      background-color: white;
+    }
+  `;
+
+  const handleEdit = async (invoice) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/invoices/${invoice.id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch invoice details');
+      const invoiceData = await response.json();
+      setEditingInvoice(invoiceData);
+    } catch (err) {
+      console.error('Error editing invoice:', err);
+      alert('Failed to edit invoice: ' + err.message);
+    }
+  };
+
+  const handleSaveEdit = async (updatedInvoice) => {
+    setSearchResults(prev => 
+      prev.map(inv => inv.id === updatedInvoice.id ? updatedInvoice : inv)
+    );
+    alert('Invoice updated successfully');
+  };
+
+  const handleDelete = async (invoice) => {
+    if (!window.confirm('Are you sure you want to delete this invoice?')) return;
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/invoices/${invoice.id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) throw new Error('Failed to delete invoice');
+
+      // Remove deleted invoice from results
+      setSearchResults(prev => prev.filter(inv => inv.id !== invoice.id));
+      alert('Invoice deleted successfully');
+    } catch (err) {
+      alert('Failed to delete invoice: ' + err.message);
+    }
+  };
+
+  const EditInvoiceModal = ({ invoice, onClose, onSave }) => {
+    const [formData, setFormData] = useState({
+      customerName: invoice.customerName,
+      customerMobile: invoice.customerMobile || '',
+      customerAddress: invoice.customerAddress || '',
+      paymentStatus: invoice.paymentStatus,
+      items: invoice.items.map(item => ({
+        ...item,
+        quantity: item.quantity.toString(),
+        unitPrice: item.unitPrice.toString()
+      }))
+    });
+
+    const calculateItemTotals = (item) => {
+      const quantity = parseFloat(item.quantity) || 0;
+      const unitPrice = parseFloat(item.unitPrice) || 0;
+      const subtotal = quantity * unitPrice;
+      const cgst = (subtotal * item.cgstRate) / 100;
+      const sgst = (subtotal * item.sgstRate) / 100;
+      const taxAmount = cgst + sgst;
+      const totalPrice = subtotal + taxAmount;
+
+      return {
+        taxAmount,
+        totalPrice
+      };
     };
 
     const handleItemChange = (index, field, value) => {
-      const updatedItems = [...editedInvoice.items];
+      const updatedItems = [...formData.items];
       updatedItems[index] = {
         ...updatedItems[index],
         [field]: value
       };
 
-      // Recalculate totals
-      const item = updatedItems[index];
-      const quantity = parseFloat(item.quantity);
-      const unitPrice = parseFloat(item.unitPrice);
-      const cgstRate = parseFloat(item.cgstRate);
-      const sgstRate = parseFloat(item.sgstRate);
+      if (field === 'quantity' || field === 'unitPrice') {
+        const { taxAmount, totalPrice } = calculateItemTotals(updatedItems[index]);
+        updatedItems[index].taxAmount = taxAmount;
+        updatedItems[index].totalPrice = totalPrice;
+      }
 
-      const subtotal = quantity * unitPrice;
-      const taxAmount = subtotal * ((cgstRate + sgstRate) / 100);
-      const totalPrice = subtotal + taxAmount;
-
-      updatedItems[index] = {
-        ...item,
-        taxAmount,
-        totalPrice
-      };
-
-      setEditedInvoice(prev => ({
+      setFormData(prev => ({
         ...prev,
-        items: updatedItems,
-        totalAmount: updatedItems.reduce((sum, item) => sum + item.totalPrice, 0)
+        items: updatedItems
       }));
     };
 
-    return (
-      <div className="edit-invoice">
-        <h3>Edit Invoice</h3>
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      
+      try {
+        const payload = {
+          ...invoice,
+          ...formData,
+          items: formData.items.map(item => ({
+            ...item,
+            quantity: parseFloat(item.quantity),
+            unitPrice: parseFloat(item.unitPrice),
+            taxAmount: parseFloat(item.taxAmount),
+            totalPrice: parseFloat(item.totalPrice)
+          })),
+          totalAmount: formData.items.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0)
+        };
+
+        const response = await fetch(`http://localhost:8080/api/invoices/${invoice.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Failed to update invoice');
         
-        <div className="form-group">
-          <label>Invoice No:</label>
-          <input
-            type="text"
-            value={editedInvoice.invoiceNo}
-            onChange={(e) => handleInputChange(e, 'invoiceNo')}
-          />
-        </div>
+        const updatedInvoice = await response.json();
+        onSave(updatedInvoice);
+        onClose();
+      } catch (err) {
+        alert('Failed to update invoice: ' + err.message);
+      }
+    };
 
-        <div className="form-group">
-          <label>Customer Name:</label>
-          <input
-            type="text"
-            value={editedInvoice.customerName}
-            onChange={(e) => handleInputChange(e, 'customerName')}
-          />
-        </div>
+    return (
+      <div className="invoice-details-modal">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h2>Edit Invoice #{invoice.invoiceNo}</h2>
+            <button onClick={onClose} className="close-btn">&times;</button>
+          </div>
 
-        <div className="form-group">
-          <label>Customer Mobile:</label>
-          <input
-            type="text"
-            value={editedInvoice.customerMobile}
-            onChange={(e) => handleInputChange(e, 'customerMobile')}
-          />
-        </div>
+          <form onSubmit={handleSubmit}>
+            {/* Existing customer fields */}
+            <div className="form-group">
+              <label>Customer Name</label>
+              <input
+                type="text"
+                value={formData.customerName}
+                onChange={(e) => setFormData({...formData, customerName: e.target.value})}
+                className="form-input"
+                required
+              />
+            </div>
 
-        <div className="form-group">
-          <label>Customer Address:</label>
-          <textarea
-            value={editedInvoice.customerAddress}
-            onChange={(e) => handleInputChange(e, 'customerAddress')}
-          />
-        </div>
+            <div className="form-group">
+              <label>Mobile</label>
+              <input
+                type="text"
+                value={formData.customerMobile}
+                onChange={(e) => setFormData({...formData, customerMobile: e.target.value})}
+                className="form-input"
+              />
+            </div>
 
-        <div className="items-section">
-          <h4>Items</h4>
-          <table>
-            <thead>
-              <tr>
-                <th>Item Name</th>
-                <th>Category</th>
-                <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>CGST (%)</th>
-                <th>SGST (%)</th>
-                <th>Tax Amount</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {editedInvoice.items.map((item, index) => (
-                <tr key={index}>
-                  <td>
-                    <input
-                      type="text"
-                      value={item.itemName}
-                      onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      value={item.itemCategory}
-                      onChange={(e) => handleItemChange(index, 'itemCategory', e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={item.unitPrice}
-                      onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={item.cgstRate}
-                      onChange={(e) => handleItemChange(index, 'cgstRate', e.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={item.sgstRate}
-                      onChange={(e) => handleItemChange(index, 'sgstRate', e.target.value)}
-                    />
-                  </td>
-                  <td>₹{item.taxAmount.toFixed(2)}</td>
-                  <td>₹{item.totalPrice.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            <div className="form-group">
+              <label>Address</label>
+              <textarea
+                value={formData.customerAddress}
+                onChange={(e) => setFormData({...formData, customerAddress: e.target.value})}
+                className="form-input"
+                rows="3"
+              />
+            </div>
 
-        <div className="invoice-summary">
-          <p><strong>Total Amount:</strong> ₹{editedInvoice.totalAmount.toFixed(2)}</p>
-        </div>
+            {/* Items table */}
+            <div className="form-group">
+              <label>Items</label>
+              <div className="table-wrapper">
+                <table className="items-table">
+                  <thead>
+                    <tr>
+                      <th>Item Name</th>
+                      <th>Category</th>
+                      <th>Quantity</th>
+                      <th>Unit Price</th>
+                      <th>CGST %</th>
+                      <th>SGST %</th>
+                      <th>Tax Amount</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.items.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.itemName}</td>
+                        <td>{item.category}</td>
+                        <td>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                            className="form-input-sm"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.unitPrice}
+                            onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)}
+                            className="form-input-sm"
+                          />
+                        </td>
+                        <td>{item.cgstRate}%</td>
+                        <td>{item.sgstRate}%</td>
+                        <td>₹{item.taxAmount.toFixed(2)}</td>
+                        <td>₹{item.totalPrice.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-        <div className="button-group">
-          <button onClick={() => setEditMode(false)} className="btn btn-gray">
-            Cancel
-          </button>
-          <button 
-            onClick={() => handleUpdateInvoice(editedInvoice)} 
-            className="btn btn-blue"
-          >
-            Save Changes
-          </button>
+            <div className="form-group">
+              <label>Payment Status</label>
+              <select
+                value={formData.paymentStatus}
+                onChange={(e) => setFormData({...formData, paymentStatus: e.target.value})}
+                className="form-input"
+              >
+                <option value="PENDING">Pending</option>
+                <option value="PAID">Paid</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+
+            <div className="totals-section">
+              <p><strong>Grand Total:</strong> ₹{formData.items.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0).toFixed(2)}</p>
+            </div>
+
+            <div className="button-group">
+              <button type="submit" className="btn btn-blue">
+                Save Changes
+              </button>
+              <button type="button" onClick={onClose} className="btn btn-gray">
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     );
   };
 
-  if (editMode && selectedInvoice) {
-    return <EditInvoice invoice={selectedInvoice} />;
-  }
-
-  if (viewMode && selectedInvoice) {
-    return <InvoiceDetails invoice={selectedInvoice} />;
-  }
-
   return (
     <div className="content-panel">
       <h2 className="section-title">Search Invoice</h2>
-      <p className="helper-text">Search for invoices by invoice number, customer name, or mobile number</p>
-
+      
       <div className="search-container">
         <div className="form-group">
           <input
@@ -615,14 +532,14 @@ export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu
             placeholder="Search by invoice number, customer name, or mobile..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="form-input"
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            className="form-input"
           />
         </div>
         <div className="button-group">
           <button 
             onClick={handleSearch} 
-            className="btn btn-blue" 
+            className="btn btn-blue"
             disabled={loading}
           >
             {loading ? 'Searching...' : 'Search'}
@@ -634,7 +551,7 @@ export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu
       </div>
 
       {error && (
-        <div className="error-message" style={{ margin: '20px 0' }}>
+        <div className="error-message">
           {error}
         </div>
       )}
@@ -668,20 +585,20 @@ export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu
                       <td>{invoice.paymentStatus}</td>
                       <td>
                         <div className="button-group">
-                          <button 
-                            onClick={() => handleViewInvoice(invoice.id)} 
+                          <button
+                            onClick={() => handleView(invoice)}
                             className="btn-link btn-blue-link"
                           >
                             View
                           </button>
-                          <button 
-                            onClick={() => handleEditInvoice(invoice.id)} 
+                          <button
+                            onClick={() => handleEdit(invoice)}
                             className="btn-link btn-blue-link"
                           >
                             Edit
                           </button>
-                          <button 
-                            onClick={() => handleDeleteInvoice(invoice.id)} 
+                          <button
+                            onClick={() => handleDelete(invoice)}
                             className="btn-link btn-red-link"
                           >
                             Delete
@@ -698,6 +615,26 @@ export default function SearchInvoice({ handleBack, invoices = [], setActiveMenu
           )}
         </div>
       )}
+
+      {selectedInvoice && (
+        <InvoiceDetails 
+          invoice={selectedInvoice} 
+          onClose={() => setSelectedInvoice(null)} 
+        />
+      )}
+
+      {editingInvoice && (
+        <EditInvoiceModal
+          invoice={editingInvoice}
+          onClose={() => setEditingInvoice(null)}
+          onSave={(updatedInvoice) => {
+            setSearchResults(prev => prev.map(inv => inv.id === updatedInvoice.id ? updatedInvoice : inv));
+            setEditingInvoice(null);
+          }}
+        />
+      )}
+
+      <style>{styles}</style>
     </div>
   );
 }

@@ -179,6 +179,22 @@ body {
   font-size: 13px;
 }
 
+/* Small input style */
+.form-input-sm {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: right;
+}
+
+.form-input-sm:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
 /* Button styles */
 .button-group {
   display: flex;
@@ -235,8 +251,16 @@ body {
   border: none;
   padding: 4px 8px;
   cursor: pointer;
+  color: #3b82f6;
   font-size: 14px;
-  margin-right: 12px; /* Add margin between buttons */
+}
+
+.btn-red-link {
+  color: #dc2626;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
 }
 
 .btn-link:last-child {
@@ -268,6 +292,8 @@ body {
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
 }
 
 .customer-table {

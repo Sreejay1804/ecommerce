@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,13 @@ public class InvoiceService {
     
     // Get all invoices
     public List<Invoice> getAllInvoices() {
-        return invoiceRepository.findAllByOrderByInvoiceDateDesc();
+        return invoiceRepository.findAllByOrderByInvoiceDateDesc().stream()
+            .map(invoice -> {
+                // Force initialization of items collection
+                invoice.getItems().size();
+                return invoice;
+            })
+            .collect(Collectors.toList());
     }
     
     // Get invoice by ID
@@ -128,7 +135,13 @@ public class InvoiceService {
     
     // Search invoices
     public List<Invoice> searchInvoices(String searchTerm) {
-        return invoiceRepository.searchInvoices(searchTerm);
+        return invoiceRepository.searchInvoices(searchTerm).stream()
+            .map(invoice -> {
+                // Force initialization of items collection
+                invoice.getItems().size();
+                return invoice;
+            })
+            .collect(Collectors.toList());
     }
     
     // Get invoices by customer name
