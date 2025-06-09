@@ -270,6 +270,38 @@ export default function SearchInvoice({ handleBack }) {
     select.form-input {
       background-color: white;
     }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      justify-content: left;
+    }
+
+    .btn-link {
+      background: none;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-blue-link {
+      color: #3b82f6;
+    }
+
+    .btn-red-link {
+      color: #dc2626;
+    }
+
+    .btn-green-link {
+      color:rgb(28, 132, 66);  // Green color
+    }
+
+    .btn-link:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
   `;
 
   const handleEdit = async (invoice) => {
@@ -320,7 +352,6 @@ export default function SearchInvoice({ handleBack }) {
       customerName: invoice.customerName,
       customerMobile: invoice.customerMobile || '',
       customerAddress: invoice.customerAddress || '',
-      paymentStatus: invoice.paymentStatus,
       items: invoice.items.map(item => ({
         ...item,
         quantity: item.quantity.toString(),
@@ -406,7 +437,7 @@ export default function SearchInvoice({ handleBack }) {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Existing customer fields */}
+            {/* Customer fields */}
             <div className="form-group">
               <label>Customer Name</label>
               <input
@@ -490,19 +521,6 @@ export default function SearchInvoice({ handleBack }) {
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Payment Status</label>
-              <select
-                value={formData.paymentStatus}
-                onChange={(e) => setFormData({...formData, paymentStatus: e.target.value})}
-                className="form-input"
-              >
-                <option value="PENDING">Pending</option>
-                <option value="PAID">Paid</option>
-                <option value="CANCELLED">Cancelled</option>
-              </select>
-            </div>
-
             <div className="totals-section">
               <p><strong>Grand Total:</strong> ₹{formData.items.reduce((sum, item) => sum + parseFloat(item.totalPrice), 0).toFixed(2)}</p>
             </div>
@@ -519,6 +537,111 @@ export default function SearchInvoice({ handleBack }) {
         </div>
       </div>
     );
+  };
+
+  const handlePrint = async (invoice) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/invoices/${invoice.id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch invoice details');
+      const invoiceData = await response.json();
+      
+      const formattedDate = new Date(invoiceData.invoiceDate).toLocaleDateString('en-IN');
+      
+      // Create hidden iframe for printing
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      
+      // Generate print content
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Invoice #${invoiceData.invoiceNo}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .invoice-header { margin-bottom: 20px; }
+              .customer-info { margin-bottom: 20px; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f8f9fa; }
+              .totals { margin-top: 20px; text-align: right; }
+              @media print {
+                body { margin: 0; padding: 20px; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="invoice-header">
+              <h2>Invoice #${invoiceData.invoiceNo}</h2>
+              <p>Date: ${formattedDate}</p>
+            </div>
+            
+            <div class="customer-info">
+              <h3>Customer Details</h3>
+              <p>Name: ${invoiceData.customerName}</p>
+              <p>Mobile: ${invoiceData.customerMobile || 'N/A'}</p>
+              <p>Address: ${invoiceData.customerAddress || 'N/A'}</p>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Item Name</th>
+                  <th>Category</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>CGST %</th>
+                  <th>SGST %</th>
+                  <th>Tax Amount</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${invoiceData.items.map(item => `
+                  <tr>
+                    <td>${item.itemName}</td>
+                    <td>${item.category || '-'}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${item.unitPrice.toFixed(2)}</td>
+                    <td>${item.cgstRate}%</td>
+                    <td>${item.sgstRate}%</td>
+                    <td>₹${item.taxAmount.toFixed(2)}</td>
+                    <td>₹${item.totalPrice.toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="totals">
+              <p><strong>Subtotal:</strong> ₹${(invoiceData.totalAmount - invoiceData.items.reduce((sum, item) => sum + item.taxAmount, 0)).toFixed(2)}</p>
+              <p><strong>Total Tax:</strong> ₹${invoiceData.items.reduce((sum, item) => sum + item.taxAmount, 0).toFixed(2)}</p>
+              <p><strong>Grand Total:</strong> ₹${invoiceData.totalAmount.toFixed(2)}</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      // Write to iframe and print
+      iframe.contentWindow.document.write(printContent);
+      iframe.contentWindow.document.close();
+
+      iframe.contentWindow.onafterprint = () => {
+        // Remove iframe after printing
+        document.body.removeChild(iframe);
+      };
+
+      iframe.contentWindow.print();
+    } catch (err) {
+      console.error('Error printing invoice:', err);
+      alert('Failed to print invoice: ' + err.message);
+    }
   };
 
   return (
@@ -570,7 +693,6 @@ export default function SearchInvoice({ handleBack }) {
                     <th>Mobile</th>
                     <th>Date</th>
                     <th>Total Amount</th>
-                    <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -582,7 +704,6 @@ export default function SearchInvoice({ handleBack }) {
                       <td>{invoice.customerMobile}</td>
                       <td>{new Date(invoice.invoiceDate).toLocaleDateString()}</td>
                       <td>₹{invoice.totalAmount.toFixed(2)}</td>
-                      <td>{invoice.paymentStatus}</td>
                       <td>
                         <div className="button-group">
                           <button
@@ -596,6 +717,12 @@ export default function SearchInvoice({ handleBack }) {
                             className="btn-link btn-blue-link"
                           >
                             Edit
+                          </button>
+                          <button
+                            onClick={() => handlePrint(invoice)}
+                            className="btn-link btn-green-link"
+                          >
+                            Print
                           </button>
                           <button
                             onClick={() => handleDelete(invoice)}
