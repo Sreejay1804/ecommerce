@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import AddProduct from './AddProduct';
 import ManageProduct from './ManageProduct';
@@ -19,7 +18,7 @@ export default function ProductModule() {
                 return (
                     <div className="content-panel">
                         <h2 className="section-title">Product Management</h2>
-                        <div className="button-group" style={{marginTop: '20px'}}>
+                        <div className="product-actions-row" style={{ marginTop: '20px' }}>
                             <button onClick={() => setActiveView('add')} className="btn btn-blue">
                                 Add New Product
                             </button>

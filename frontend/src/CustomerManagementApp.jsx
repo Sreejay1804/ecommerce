@@ -273,7 +273,7 @@ export default function CustomerManagementApp() {
       return (
         <div className="content-panel">
           <h2 className="section-title">Customer Management</h2>
-          <div className="options-grid" style={{ marginTop: '20px' }}>
+          <div className="customer-actions-row" style={{ marginTop: '20px' }}>
             <button 
               onClick={() => setActiveMenu('add')} 
               className="btn btn-blue"
@@ -332,18 +332,20 @@ export default function CustomerManagementApp() {
                     <td>{customer.phone}</td>
                     <td>{customer.address || 'N/A'}</td>
                     <td>
-                      <button 
-                        onClick={() => handleEditFromList(customer)} 
-                        className="btn-link btn-blue-link"
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteFromList(customer)} 
-                        className="btn-link btn-red-link"
-                      >
-                        Delete
-                      </button>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button 
+                          onClick={() => handleEditFromList(customer)} 
+                          className="btn-link btn-blue-link"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteFromList(customer)} 
+                          className="btn-link btn-red-link"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

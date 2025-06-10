@@ -127,12 +127,14 @@ export default function ManageProduct({ onBack }) {
                   <td>{product.category}</td>
                   <td>₹{parseFloat(product.unitPrice).toFixed(2)}</td>
                   <td>
-                    <button onClick={() => handleEdit(product)} className="btn-link btn-blue-link">
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(product.id)} className="btn-link btn-red-link">
-                      Delete
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={() => handleEdit(product)} className="btn-link btn-blue-link">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(product.id)} className="btn-link btn-red-link">
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
