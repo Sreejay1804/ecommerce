@@ -50,6 +50,7 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  margin-bottom: 14px; /* Add vertical gap between buttons */
 }
 
 .sidebar-button:hover {
