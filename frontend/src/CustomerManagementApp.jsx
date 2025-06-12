@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from './contexts/AuthContext';
 import './CustomerManagementApp.css';
 import AddCustomer from './components/AddCustomer.jsx';
 import AddProduct from './components/AddProduct.jsx';
@@ -15,6 +16,7 @@ const CUSTOMER_API = 'http://localhost:8080/api/customers';
 const INVOICE_API = 'http://localhost:8080/api/invoices';
 
 export default function CustomerManagementApp() {
+  const { user, logout } = useAuth();
   const [activeMenu, setActiveMenu] = useState(null);
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -201,20 +203,6 @@ export default function CustomerManagementApp() {
     }
   };
 
-  const searchProducts = async (term) => {
-    if (!term.trim()) return products;
-    try {
-      const res = await fetch(`http://localhost:8080/api/products/search?term=${encodeURIComponent(term)}`);
-      if (!res.ok) throw new Error('Search failed');
-      return await res.json();
-    } catch (err) {
-      console.error(err);
-      return products.filter(p =>
-        p.name.toLowerCase().includes(term.toLowerCase())
-      );
-    }
-  };
-
   const renderPanel = () => {
     switch (activeMenu) {
       case 'add':
@@ -391,21 +379,33 @@ export default function CustomerManagementApp() {
 
   return (
     <div className="app-container">
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <h1 className="sidebar-title">Dashboard</h1>
-        </div>
-        <div className="sidebar-content">
-          <div className="sidebar-item">
-            <button onClick={() => setActiveMenu(null)} className="sidebar-button">Customer</button>
-            <button onClick={() => setActiveMenu('invoice')} className="sidebar-button">Invoice</button>
-            <button 
-              onClick={() => setActiveMenu('products')} 
-              className={`sidebar-button ${activeMenu === 'products' ? 'active' : ''}`}
-            >
-              Products
-            </button>
+      <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <div>
+          <div className="sidebar-header">
+            <h1 className="sidebar-title">Dashboard</h1>
           </div>
+          <div className="sidebar-content">
+            <div className="sidebar-item">
+              <button onClick={() => setActiveMenu(null)} className="sidebar-button">Customer</button>
+              <button onClick={() => setActiveMenu('invoice')} className="sidebar-button">Invoice</button>
+              <button 
+                onClick={() => setActiveMenu('products')} 
+                className={`sidebar-button ${activeMenu === 'products' ? 'active' : ''}`}
+              >
+                Products
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* Spacer to push logout to the bottom */}
+        <div style={{ flex: 1 }}></div>
+        <div className="sidebar-footer" style={{ padding: '16px', marginTop: 'auto' }}>
+          {user && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '14px', marginBottom: '8px' }}>Logged in as <b>{user.username}</b></span>
+              <button className="btn btn-red" onClick={logout}>Logout</button>
+            </div>
+          )}
         </div>
       </div>
 

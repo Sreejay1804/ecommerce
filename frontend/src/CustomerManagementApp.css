@@ -547,7 +547,7 @@ body {
 .search-results td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e7e7eb;
 }
 
 .search-results th {
@@ -621,6 +621,101 @@ body {
   font-size: 18px;
   padding: 10px 0;
   font-weight: 600;
+}
+
+.auth-panel {
+  max-width: 370px;
+  margin: 80px auto 0 auto;
+  padding: 36px 30px 28px 30px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 6px 32px #0002;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1.5px solid #e0e7ef;
+}
+
+.auth-panel h2 {
+  margin-bottom: 20px;
+  color: #2563eb;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: 1.7rem;
+}
+
+.auth-panel .form-input {
+  width: 100%;
+  margin-bottom: 18px;
+  padding: 13px;
+  border-radius: 7px;
+  border: 1.5px solid #d1d5db;
+  font-size: 17px;
+  background: #f9fafb;
+  transition: border 0.2s;
+}
+
+.auth-panel .form-input:focus {
+  border: 1.5px solid #2563eb;
+  outline: none;
+  background: #fff;
+}
+
+.auth-panel .btn {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 11px 0;
+  border: none;
+  border-radius: 7px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.auth-panel .btn.btn-blue {
+  background: #2563eb;
+  color: #fff;
+}
+
+.auth-panel .btn.btn-blue:hover {
+  background: #1d4ed8;
+}
+
+.auth-panel .btn.btn-green {
+  background: #22c55e;
+  color: #fff;
+}
+
+.auth-panel .btn.btn-green:hover {
+  background: #16a34a;
+}
+
+.auth-panel .error-message {
+  color: #dc2626;
+  margin-bottom: 12px;
+  font-size: 15px;
+  background: #fee2e2;
+  border-radius: 5px;
+  padding: 7px 0;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-size: 15px;
+  margin-top: 8px;
+}
+
+.auth-panel form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 @media print {
