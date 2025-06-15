@@ -101,6 +101,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 5rem;
   flex: 1;
   padding: clamp(1rem, 3vw, 2rem);
   animation: fadeInUp 0.8s ease-out;
@@ -341,4 +342,145 @@
   background: rgba(251, 110, 110, 0.2);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(251, 110, 110, 0.15);
+}
+
+.card {
+  background: linear-gradient(rgba(236, 231, 231, 0.7), rgba(213, 205, 205, 0.7));
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 350px;
+  text-align: center;
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--hover-shadow);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #2196F3, #1976D2);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.card:hover::before {
+  transform: scaleX(1);
+}
+
+.card-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  background: #f5f9ff;
+  width: 80px;
+  height: 80px;
+  line-height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .card-icon {
+  transform: scale(1.1);
+}
+
+.card h2 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.card p {
+  color: var(--secondary-color);
+  line-height: 1.6;
+  font-size: 1.1rem;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+/* Animation for cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .dashboard-header h1 {
+    font-size: 2.3rem;
+  }
+  
+  .dashboard-content {
+    gap: 2rem;
+    padding: 1rem;
+  }
+  
+  .card {
+    width: 300px;
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+  
+  .dashboard-header {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+  }
+  
+  .card {
+    width: 100%;
+    max-width: 350px;
+  }
+  
+  .card:hover {
+    transform: translateY(-4px);
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .card {
+    padding: 1.5rem;
+  }
+  
+  .card-icon {
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    font-size: 2.5rem;
+  }
 }

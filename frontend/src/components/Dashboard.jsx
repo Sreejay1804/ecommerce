@@ -14,23 +14,27 @@ export default function Dashboard() {
           <button className="btn btn-logout" onClick={logout}>Logout</button>
         </div>
         <div className="dashboard-content">
-          <div className="dashboard-buttons">
-            <button 
-              className="dashboard-btn"
-              data-type="product"
-              onClick={() => navigate('/customer-management')}
-            >
-              Product Invoices
-            </button>
-            <button 
-              className="dashboard-btn"
-              data-type="sales"
-              onClick={() => navigate('/sales-invoices')}
-            >
-              Sales Invoices
-            </button>
-          </div>
+        <div 
+          className="card"
+          onClick={() => navigate('/customer-management')}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="card-icon">📝</div>
+          <h2>Purchase Invoice</h2>
+          <p>Manage purchase invoices and customer details</p>
         </div>
+        <div 
+          className="card"
+          onClick={() => navigate('/sales')}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="card-icon">💰</div>
+          <h2>Sales Invoice</h2>
+          <p>Manage sales invoices and transactions</p>
+        </div>
+      </div>
       </div>
     </>
   );
