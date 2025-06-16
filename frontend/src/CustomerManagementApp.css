@@ -16,7 +16,7 @@ body {
   display: flex;
   min-height: 100vh;
   background-color: #f3f4f6;
-   background: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)),
+   background: linear-gradient(rgb(255, 255, 255), rgba(255, 255, 255, 0.7)),
               url('C:\Users\Sreejay\Videos\ecommerce\frontend\public\dashboard-bg.jpg');
   background-size: cover;
   background-position: center;
@@ -26,7 +26,11 @@ body {
 /* Sidebar styles */
 .sidebar {
   width: 256px;
-  background-color: #1f2937;
+  background-color: #1f2937; 
+  background:url('C:\Users\Sreejay\Videos\ecommerce\frontend\public\sidebar-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: white;
 }
 
@@ -83,6 +87,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  
 }
 
 .main-content {
