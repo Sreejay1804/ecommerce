@@ -8,6 +8,7 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.5;
+ 
 }
 
 /* App layout */
@@ -15,6 +16,11 @@ body {
   display: flex;
   min-height: 100vh;
   background-color: #f3f4f6;
+   background: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)),
+              url('C:\Users\Sreejay\Videos\ecommerce\frontend\public\dashboard-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 /* Sidebar styles */
@@ -253,12 +259,12 @@ body {
 }
 
 .btn-gray {
-  background-color: #6b7280;
+  background-color: #ffffff;
   margin-left: 8px;
 }
 
 .btn-gray:hover {
-  background-color: #4b5563;
+  background-color: #3b84ea;
 }
 
 .btn-link {
@@ -272,6 +278,9 @@ body {
 
 .btn-red-link {
   color: #dc2626;
+}
+.btn-red-link:hover {
+  color: #b91c1c;
 }
 
 .btn-link:hover {
@@ -624,17 +633,14 @@ body {
 }
 
 .auth-panel {
-  max-width: 370px;
-  margin: 80px auto 0 auto;
-  padding: 36px 30px 28px 30px;
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 6px 32px #0002;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  border: 1.5px solid #e0e7ef;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 1.5rem;
+  padding: clamp(2rem, 5vw, 4rem);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: min(600px, 95%); /* Increased from 400px to 600px */
+  animation: fadeIn 0.8s ease-in-out;
 }
 
 .auth-panel h2 {

@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import SignIn from './components/SignIn';
-import Register from './components/Register';
+import { Navigate, Route, BrowserRouter as Router, Routes, useNavigate } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
+import Register from './components/Register';
+import SignIn from './components/SignIn';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import CustomerManagementApp from './CustomerManagementApp';
+//import './CustomerManagementApp.css';
 import './styles/Dashboard.css';
+//import './styles/ProductModule.css';
+//import './styles/Products.css';
 
 function AppContent() {
   const { user } = useAuth();

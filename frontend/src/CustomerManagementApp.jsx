@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from './contexts/AuthContext';
-import './CustomerManagementApp.css';
 import AddCustomer from './components/AddCustomer.jsx';
 import AddProduct from './components/AddProduct.jsx';
 import CreateInvoice from './components/CreateInvoice.jsx';
@@ -11,6 +9,8 @@ import ManageProduct from './components/ManageProduct.jsx';
 import ProductModule from './components/ProductModule';
 import SearchInvoice from './components/SearchInvoice.jsx';
 import SearchProduct from './components/SearchProduct.jsx';
+import { useAuth } from './contexts/AuthContext';
+import './CustomerManagementApp.css';
 
 const CUSTOMER_API = 'http://localhost:8080/api/customers';
 const INVOICE_API = 'http://localhost:8080/api/invoices';
@@ -329,7 +329,7 @@ export default function CustomerManagementApp() {
                         </button>
                         <button 
                           onClick={() => handleDeleteFromList(customer)} 
-                          className="btn-link btn-red-link"
+                          className="btn-link btn-red-link btn-red-link:hover"
                         >
                           Delete
                         </button>
