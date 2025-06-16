@@ -16,7 +16,7 @@ export default function Dashboard() {
         <div className="dashboard-content">
         <div 
           className="card"
-          onClick={() => navigate('/customer-management')}
+          onClick={() => navigate('/sales')}
           role="button"
           tabIndex={0}
         >
@@ -26,7 +26,8 @@ export default function Dashboard() {
         </div>
         <div 
           className="card"
-          onClick={() => navigate('/sales')}
+          
+          onClick={() => navigate('/customer-management')}
           role="button"
           tabIndex={0}
         >
