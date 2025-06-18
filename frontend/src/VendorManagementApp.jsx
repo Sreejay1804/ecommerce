@@ -173,6 +173,13 @@ export default function VendorManagementApp() {
               </button>
             </div>
           )}
+          <button 
+            className="back-button"
+            onClick={() => navigate('/dashboard')}
+          >
+            <span className="back-icon">←</span>
+            Back to Dashboard
+          </button>
         </div>
       </div>
 

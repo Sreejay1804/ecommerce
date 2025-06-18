@@ -5,119 +5,14 @@
 }
 
 .sidebar {
-    width: 250px;
-    background-color: #fff;
-    padding: 20px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.sidebar button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border: none;
-    background-color: #007bff;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.sidebar button:hover {
-    background-color: #0056b3;
-}
-
-.main-content {
-    flex: 1;
-    padding: 20px;
-}
-
-.vendor-list {
-    list-style: none;
-    padding: 0;
-}
-
-.vendor-list li {
-    background-color: #fff;
-    margin: 10px 0;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.loading-message {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-
-.error-message {
-  text-align: center;
-  padding: 2rem;
-  color: #dc2626;
-  background: #fee2e2;
-  border-radius: 8px;
-  margin: 1rem;
-}
-
-.empty-message {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-  background: #f9fafb;
-  border-radius: 8px;
-  margin: 1rem;
-}
-/* Base styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.5;
- 
-}
-
-/* App layout */
-.app-container {
-  display: flex;
-  min-height: 100vh;
-  background-color: #f3f4f6;
-   /*background: linear-gradient(rgb(255, 255, 255), rgba(255, 255, 255, 0.7)),
-              url('../public/dashboard-bg.jpg');*/
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-}
-
-/* Sidebar styles */
-.sidebar {
   width: 256px;
-  background-color: #1f2937; 
-  /*background:url('../public/sidebar-bg.jpg');*/
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  background-color: #1f2937;
   color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  left: 0;
 }
 
 .sidebar-header {
@@ -130,7 +25,9 @@ body {
 }
 
 .sidebar-content {
+  flex: 1;
   padding: 16px;
+  overflow-y: auto;
 }
 
 .sidebar-item {
@@ -173,7 +70,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  
+  margin-left: 256px; /* Same as sidebar width */
 }
 
 .main-content {
@@ -911,6 +808,100 @@ textarea.form-input {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Back Button Styles */
+.back-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.back-icon {
+  font-size: 1.2rem;
+}
+
+/* Update sidebar-footer to accommodate the back button */
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #1a1f2b; /* Slightly darker than sidebar */
+  margin-top: auto; /* Push to bottom */
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.user-info span {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 0.75rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.active {
+    transform: translateX(0);
+  }
+
+  .main-container {
+    margin-left: 0;
+  }
+
+  .sidebar-footer {
+    padding: 1rem;
+  }
+
+  .button-container {
+    gap: 0.5rem;
   }
 }
 
