@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import Register from './components/Register';
 import SignIn from './components/SignIn';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { VendorProvider } from './contexts/VendorContext';
 import CustomerManagementApp from './CustomerManagementApp';
 //import './CustomerManagementApp.css';
 import './styles/Dashboard.css';
@@ -67,7 +68,9 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
-        <AppContent />
+        <VendorProvider>
+          <AppContent />
+        </VendorProvider>
       </Router>
     </AuthProvider>
   );

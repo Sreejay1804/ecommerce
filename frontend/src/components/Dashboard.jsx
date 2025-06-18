@@ -94,29 +94,29 @@ export default function Dashboard() {
           <button className="btn btn-logout" onClick={logout}>Logout</button>
         </div>
         <div className="dashboard-content">
-        <div 
-          className="card"
-          onClick={() => navigate('/sales')}
-          role="button"
-          tabIndex={0}
-        >
-          <div className="card-icon">📝</div>
-          <h2>Purchase Invoice</h2>
-          <p>Manage purchase invoices and customer details</p>
-        </div>
-        <div 
-          className="card"
+          <div 
+            className="card"
+            onClick={() => navigate('/vendor-management')}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="card-icon">📝</div>
+            <h2>Purchase Invoice</h2>
+            <p>Manage purchase invoices and vendor details</p>
+          </div>
           
-          onClick={() => navigate('/customer-management')}
-          role="button"
-          tabIndex={0}
-        >
-          <div className="card-icon">💰</div>
-          <h2>Sales Invoice</h2>
-          <p>Manage sales invoices and transactions</p>
+          <div 
+            className="card"
+            onClick={() => navigate('/customer-management')}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="card-icon">💰</div>
+            <h2>Sales Invoice</h2>
+            <p>Manage sales invoices and transactions</p>
+          </div>
         </div>
-      </div>
-      {/* Analytics Section */}
+        {/* Analytics Section */}
           <div className="analytics-section">
             <div className="chart-container">
               <div className="chart-card">

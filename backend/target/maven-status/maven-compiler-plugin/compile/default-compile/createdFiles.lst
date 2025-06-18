@@ -5,12 +5,14 @@ com\example\customermanagement\exception\InvoiceNotFoundException.class
 com\example\customermanagement\model\Invoice$PaymentStatus.class
 com\example\customermanagement\exception\DuplicateEmailException.class
 com\example\customermanagement\model\Customer.class
+com\example\vendor\service\VendorService.class
 com\example\customermanagement\controller\UserController.class
 com\example\customermanagement\exception\CustomerNotFoundException.class
 com\example\customermanagement\model\Invoice.class
 com\example\customermanagement\exception\DuplicateInvoiceException.class
 com\example\customermanagement\repository\CustomerRepository.class
 com\example\customermanagement\service\ProductService.class
+com\example\vendor\exception\GlobalExceptionHandler.class
 com\example\customermanagement\controller\InvoiceController.class
 com\example\customermanagement\controller\CustomerController.class
 com\example\customermanagement\model\User.class
@@ -21,6 +23,9 @@ com\example\customermanagement\repository\InvoiceRepository.class
 com\example\customermanagement\service\CustomerService.class
 com\example\customermanagement\model\Product.class
 com\example\customermanagement\repository\ProductRepository.class
+com\example\vendor\model\Vendor.class
+com\example\vendor\controller\VendorController.class
+com\example\vendor\repository\VendorRepository.class
 com\example\customermanagement\model\InvoiceItem.class
 com\example\customermanagement\repository\UserRepository.class
 com\example\customermanagement\service\InvoiceService.class
