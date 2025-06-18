@@ -6,6 +6,7 @@ import SignIn from './components/SignIn';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { VendorProvider } from './contexts/VendorContext';
 import CustomerManagementApp from './CustomerManagementApp';
+import VendorManagementApp from './VendorManagementApp';
 //import './CustomerManagementApp.css';
 import './styles/Dashboard.css';
 //import './styles/ProductModule.css';
@@ -51,6 +52,11 @@ function AppContent() {
           <div>Sales Invoices Page (To be implemented)</div>
         </ProtectedRoute>
       } />
+      <Route path="/vendor-management" element={
+        <ProtectedRoute>
+          <VendorManagementApp />
+        </ProtectedRoute>
+      } />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
@@ -66,12 +72,12 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <VendorProvider>
           <AppContent />
         </VendorProvider>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }

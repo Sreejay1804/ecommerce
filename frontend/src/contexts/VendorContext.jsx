@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import vendorService from '../services/vendorService';
 
 export const VendorContext = createContext();
@@ -8,51 +8,54 @@ export const VendorProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchVendors = async () => {
-            try {
-                const data = await vendorService.getVendors();
-                setVendors(data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchVendors();
-    }, []);
-
     const addVendor = async (vendorData) => {
         try {
             const newVendor = await vendorService.addVendor(vendorData);
-            setVendors([...vendors, newVendor]);
+            setVendors(prev => [...prev, newVendor]);
+            return newVendor;
         } catch (err) {
             setError(err.message);
+            throw err;
         }
     };
 
     const deleteVendor = async (vendorId) => {
         try {
             await vendorService.deleteVendor(vendorId);
-            setVendors(vendors.filter(vendor => vendor.id !== vendorId));
+            setVendors(prev => prev.filter(vendor => vendor.id !== vendorId));
         } catch (err) {
             setError(err.message);
+            throw err;
         }
     };
 
-    const enquireVendor = async (vendorId) => {
-        try {
-            const vendor = await vendorService.getVendorById(vendorId);
-            return vendor;
-        } catch (err) {
-            setError(err.message);
-        }
+    const updateVendors = (newVendors) => {
+        setVendors(newVendors);
     };
 
     return (
-        <VendorContext.Provider value={{ vendors, loading, error, addVendor, deleteVendor, enquireVendor }}>
+        <VendorContext.Provider 
+            value={{ 
+                vendors, 
+                loading, 
+                error, 
+                addVendor, 
+                deleteVendor, 
+                updateVendors,
+                setVendors,
+                setLoading,
+                setError 
+            }}
+        >
             {children}
         </VendorContext.Provider>
     );
+};
+
+export const useVendor = () => {
+    const context = useContext(VendorContext);
+    if (!context) {
+        throw new Error('useVendor must be used within a VendorProvider');
+    }
+    return context;
 };
