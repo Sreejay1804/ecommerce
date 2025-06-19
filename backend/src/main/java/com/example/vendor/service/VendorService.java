@@ -26,11 +26,8 @@ public class VendorService {
     }
 
     public Vendor createVendor(Vendor vendor) {
-        if (vendorRepository.existsByEmail(vendor.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-        if (vendorRepository.existsByPhone(vendor.getPhone())) {
-            throw new IllegalArgumentException("Phone number already exists");
+        if (vendorRepository.existsByGstNumber(vendor.getGstNumber())) {
+            throw new IllegalArgumentException("GST number already exists");
         }
         return vendorRepository.save(vendor);
     }
@@ -38,9 +35,9 @@ public class VendorService {
     public Vendor updateVendor(Long id, Vendor vendorDetails) {
         Vendor vendor = getVendorById(id);
         vendor.setName(vendorDetails.getName());
-        vendor.setEmail(vendorDetails.getEmail());
-        vendor.setPhone(vendorDetails.getPhone());
         vendor.setAddress(vendorDetails.getAddress());
+        vendor.setDescription(vendorDetails.getDescription());
+        vendor.setGstNumber(vendorDetails.getGstNumber());
         return vendorRepository.save(vendor);
     }
 
@@ -51,7 +48,7 @@ public class VendorService {
         vendorRepository.deleteById(id);
     }
 
-    public List<Vendor> searchVendors(String name) {
-        return vendorRepository.findByNameContainingIgnoreCase(name);
+    public List<Vendor> searchVendors(String term) {
+        return vendorRepository.findByNameContainingIgnoreCaseOrGstNumberContainingIgnoreCase(term, term);
     }
 }

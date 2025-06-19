@@ -2,6 +2,7 @@ com\example\customermanagement\controller\ApiDocController.class
 com\example\customermanagement\config\DatabaseConfig.class
 com\example\customermanagement\CustomerManagementApplication.class
 com\example\customermanagement\exception\InvoiceNotFoundException.class
+com\example\vendor\config\WebConfig.class
 com\example\customermanagement\model\Invoice$PaymentStatus.class
 com\example\customermanagement\exception\DuplicateEmailException.class
 com\example\customermanagement\model\Customer.class
@@ -13,6 +14,7 @@ com\example\customermanagement\exception\DuplicateInvoiceException.class
 com\example\customermanagement\repository\CustomerRepository.class
 com\example\customermanagement\service\ProductService.class
 com\example\vendor\exception\GlobalExceptionHandler.class
+com\example\vendor\VendorApplication.class
 com\example\customermanagement\controller\InvoiceController.class
 com\example\customermanagement\controller\CustomerController.class
 com\example\customermanagement\model\User.class

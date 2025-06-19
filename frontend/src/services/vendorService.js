@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = 'http://localhost:8080/api/vendors';
 
 const vendorService = {
   getVendors: async () => {
@@ -35,17 +35,19 @@ const vendorService = {
 
   addVendor: async (vendorData) => {
     try {
-      const response = await fetch(`${BASE_URL}/vendors`, {
+      const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(vendorData),
+        credentials: 'include',
+        body: JSON.stringify(vendorData)
       });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       return await response.json();
     } catch (error) {
       console.error('Error adding vendor:', error);

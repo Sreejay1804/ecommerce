@@ -18,10 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.vendor.model.Vendor;
 import com.example.vendor.service.VendorService;
 
-import jakarta.validation.Valid;
-
 @RestController
-@RequestMapping("/api/vendors")
+@RequestMapping("/vendors") // Changed from "/api/vendors" to "/vendors"
 @CrossOrigin(origins = "http://localhost:3000")
 public class VendorController {
 
@@ -29,8 +27,8 @@ public class VendorController {
     private VendorService vendorService;
 
     @GetMapping
-    public List<Vendor> getAllVendors() {
-        return vendorService.getAllVendors();
+    public ResponseEntity<List<Vendor>> getAllVendors() {
+        return ResponseEntity.ok(vendorService.getAllVendors());
     }
 
     @GetMapping("/{id}")
@@ -39,23 +37,23 @@ public class VendorController {
     }
 
     @PostMapping
-    public ResponseEntity<Vendor> createVendor(@Valid @RequestBody Vendor vendor) {
+    public ResponseEntity<Vendor> createVendor(@RequestBody Vendor vendor) {
         return ResponseEntity.ok(vendorService.createVendor(vendor));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Vendor> updateVendor(@PathVariable Long id, @Valid @RequestBody Vendor vendorDetails) {
+    public ResponseEntity<Vendor> updateVendor(@PathVariable Long id, @RequestBody Vendor vendorDetails) {
         return ResponseEntity.ok(vendorService.updateVendor(id, vendorDetails));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteVendor(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteVendor(@PathVariable Long id) {
         vendorService.deleteVendor(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/search")
-    public List<Vendor> searchVendors(@RequestParam String name) {
-        return vendorService.searchVendors(name);
+    public ResponseEntity<List<Vendor>> searchVendors(@RequestParam String term) {
+        return ResponseEntity.ok(vendorService.searchVendors(term));
     }
 }

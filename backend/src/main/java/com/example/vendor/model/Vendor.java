@@ -19,11 +19,12 @@ public class Vendor {
     @Column(nullable = false)
     private String name;
     
-    @Column(unique = true, nullable = false)
-    private String email;
-    
     @Column(nullable = false)
-    private String phone;
-    
     private String address;
+    
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    
+    @Column(name = "gst_number", unique = true, nullable = false)
+    private String gstNumber;
 }
