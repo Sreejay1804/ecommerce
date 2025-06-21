@@ -17,7 +17,7 @@ body {
   min-height: 100vh;
   background-color: #f3f4f6;
    background: linear-gradient(rgb(255, 255, 255), rgba(255, 255, 255, 0.7)),
-              url('C:\Users\Sreejay\Videos\ecommerce\frontend\public\dashboard-bg.jpg');
+              url('C:\Users\dell\Music\ecommerce\frontend\public\dashboard-bg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -27,7 +27,7 @@ body {
 .sidebar {
   width: 256px;
   background-color: #1f2937; 
-  background:url('C:\Users\Sreejay\Videos\ecommerce\frontend\public\sidebar-bg.jpg');
+  background:url('C:\Users\dell\Music\ecommerce\frontend\public\sidebar-bg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

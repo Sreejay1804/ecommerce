@@ -5,12 +5,16 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
     name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    gstNumber: '',
+    description: ''
   });
   const [formErrors, setFormErrors] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    address: '',
+    gstNumber: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [selectedVendorId, setSelectedVendorId] = useState(null);
@@ -29,11 +33,13 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
           name: vendorToEdit.name,
           email: vendorToEdit.email,
           phone: vendorToEdit.phone,
-          address: vendorToEdit.address || ''
+          address: vendorToEdit.address || '',
+          gstNumber: vendorToEdit.gstNumber || '',
+          description: vendorToEdit.description || ''
         });
         setSelectedVendorId(vendorToEdit.id);
         setIsEditing(true);
-        setFormErrors({ name: '', email: '', phone: '' });
+        setFormErrors({ name: '', email: '', phone: '', address: '', gstNumber: '' });
       }
     }
   }, [vendors]);
@@ -44,7 +50,9 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
     const errors = {
       name: '',
       email: '',
-      phone: ''
+      phone: '',
+      address: '',
+      gstNumber: ''
     };
 
     // Name validation
@@ -71,6 +79,21 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
       isValid = false;
     } else if (!/^\d{10}$/.test(formData.phone)) {
       errors.phone = 'Phone number must be exactly 10 digits';
+      isValid = false;
+    }
+
+    // Address validation
+    if (!formData.address.trim()) {
+      errors.address = 'Address is required';
+      isValid = false;
+    }
+
+    // GST Number validation (simple format: 15 chars, alphanumeric)
+    if (!formData.gstNumber.trim()) {
+      errors.gstNumber = 'GST Number is required';
+      isValid = false;
+    } else if (!/^[0-9A-Z]{15}$/i.test(formData.gstNumber.trim())) {
+      errors.gstNumber = 'GST Number must be 15 alphanumeric characters';
       isValid = false;
     }
 
@@ -132,10 +155,22 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
         ...formData,
         [name]: sanitized
       });
+    } else if (name === 'gstNumber') {
+      // Uppercase, remove spaces, limit to 15 chars
+      const sanitized = value.toUpperCase().replace(/\s/g, '').slice(0, 15);
+      setFormData({
+        ...formData,
+        [name]: sanitized
+      });
+    } else if (name === 'address') {
+      setFormData({
+        ...formData,
+        [name]: value.slice(0, 255)
+      });
     } else {
       setFormData({
         ...formData,
-        [name]: value.slice(0, 255) // Limit address length
+        [name]: value.slice(0, 255)
       });
     }
 
@@ -158,11 +193,13 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
       name: vendor.name,
       email: vendor.email,
       phone: vendor.phone,
-      address: vendor.address || ''
+      address: vendor.address || '',
+      gstNumber: vendor.gstNumber || '',
+      description: vendor.description || ''
     });
     setSelectedVendorId(vendor.id);
     setIsEditing(true);
-    setFormErrors({ name: '', email: '', phone: '' });
+    setFormErrors({ name: '', email: '', phone: '', address: '', gstNumber: '' });
     setSubmitError('');
   };
 
@@ -179,7 +216,9 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone,
-        address: formData.address.trim()
+        address: formData.address.trim(),
+        gstNumber: formData.gstNumber.trim(),
+        description: formData.description.trim()
       };
 
       if (isEditing && selectedVendorId !== null) {
@@ -189,7 +228,7 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
           // Clear edit mode and form after successful update
           setIsEditing(false);
           setSelectedVendorId(null);
-          setFormData({ name: '', email: '', phone: '', address: '' });
+          setFormData({ name: '', email: '', phone: '', address: '', gstNumber: '', description: '' });
           // Remove edit parameter from URL
           const url = new URL(window.location);
           url.searchParams.delete('edit');
@@ -201,7 +240,7 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
         result = await onAddVendor(vendorData);
         if (result.success) {
           alert('Vendor added successfully!');
-          setFormData({ name: '', email: '', phone: '', address: '' });
+          setFormData({ name: '', email: '', phone: '', address: '', gstNumber: '', description: '' });
         }
       }
 
@@ -218,8 +257,8 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
 
   const handleCancel = () => {
     // Clear edit mode and form
-    setFormData({ name: '', email: '', phone: '', address: '' });
-    setFormErrors({ name: '', email: '', phone: '' });
+    setFormData({ name: '', email: '', phone: '', address: '', gstNumber: '', description: '' });
+    setFormErrors({ name: '', email: '', phone: '', address: '', gstNumber: '' });
     setIsEditing(false);
     setSelectedVendorId(null);
     setSubmitError('');
@@ -309,15 +348,59 @@ export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors
         </div>
 
         <div className="form-group">
-          <label className="form-label">Address</label>
+          <label className="form-label">
+            Address <span style={{ color: '#ef4444' }}>*</span>
+          </label>
           <textarea
             name="address"
             value={formData.address}
             onChange={handleInputChange}
-            className="form-input"
-            placeholder="Enter address (optional)"
+            className={`form-input ${formErrors.address ? 'input-error' : ''}`}
+            placeholder="Enter address"
             maxLength="255"
             rows="3"
+            required
+            disabled={isSubmitting}
+          />
+          {formErrors.address && (
+            <div style={{ color: '#ef4444', fontSize: '14px', marginTop: '4px' }}>
+              {formErrors.address}
+            </div>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">
+            GST Number <span style={{ color: '#ef4444' }}>*</span>
+          </label>
+          <input
+            type="text"
+            name="gstNumber"
+            value={formData.gstNumber}
+            onChange={handleInputChange}
+            className={`form-input ${formErrors.gstNumber ? 'input-error' : ''}`}
+            placeholder="Enter GST Number"
+            maxLength="15"
+            required
+            disabled={isSubmitting}
+          />
+          {formErrors.gstNumber && (
+            <div style={{ color: '#ef4444', fontSize: '14px', marginTop: '4px' }}>
+              {formErrors.gstNumber}
+            </div>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            className="form-input"
+            placeholder="Enter vendor description (optional)"
+            maxLength="255"
+            rows="2"
             disabled={isSubmitting}
           />
         </div>
