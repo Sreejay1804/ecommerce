@@ -1,120 +1,345 @@
-import { useState } from 'react';
-import { useVendor } from '../contexts/VendorContext';
-import '../styles/VendorManagement.css';
+import { useEffect, useState } from 'react';
 
-const AddVendor = ({ onVendorAdded }) => {
-  const { addVendor } = useVendor();
+export default function AddVendor({ onAddVendor, onUpdateVendor, onBack, vendors }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     address: ''
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [formErrors, setFormErrors] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedVendorId, setSelectedVendorId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setError('');
-      setSuccess('');
-      await addVendor(formData);
-      setFormData({ name: '', email: '', phone: '', address: '' });
-      setSuccess('Vendor added successfully!');
-      if (onVendorAdded) onVendorAdded();
-    } catch (err) {
-      setError('Failed to add vendor. Please try again.');
+  // Update the useEffect hook that handles edit mode
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && vendors) {
+      const vendorToEdit = vendors.find(v => v.id.toString() === editId);
+      if (vendorToEdit) {
+        setFormData({
+          name: vendorToEdit.name,
+          email: vendorToEdit.email,
+          phone: vendorToEdit.phone,
+          address: vendorToEdit.address || ''
+        });
+        setSelectedVendorId(vendorToEdit.id);
+        setIsEditing(true);
+        setFormErrors({ name: '', email: '', phone: '' });
+      }
+    }
+  }, [vendors]);
+
+  // Update the validateForm function
+  const validateForm = () => {
+    let isValid = true;
+    const errors = {
+      name: '',
+      email: '',
+      phone: ''
+    };
+
+    // Name validation
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+      isValid = false;
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters long';
+      isValid = false;
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    // Phone validation
+    if (!formData.phone) {
+      errors.phone = 'Phone number is required';
+      isValid = false;
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      errors.phone = 'Phone number must be exactly 10 digits';
+      isValid = false;
+    }
+
+    // Check for duplicate email and phone only when adding new vendor
+    if (!isEditing && vendors) {
+      const emailExists = vendors.some(vendor =>
+        vendor.email.toLowerCase() === formData.email.toLowerCase()
+      );
+      if (emailExists) {
+        errors.email = 'A vendor with this email already exists';
+        isValid = false;
+      }
+      const phoneExists = vendors.some(vendor =>
+        vendor.phone === formData.phone
+      );
+      if (phoneExists) {
+        errors.phone = 'A vendor with this phone number already exists';
+        isValid = false;
+      }
+    }
+
+    // Check only for duplicate email when editing (exclude current vendor)
+    if (isEditing && vendors && selectedVendorId) {
+      const emailExists = vendors.some(vendor =>
+        vendor.email.toLowerCase() === formData.email.toLowerCase() &&
+        vendor.id !== selectedVendorId
+      );
+      if (emailExists) {
+        errors.email = 'A vendor with this email already exists';
+        isValid = false;
+      }
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === 'phone') {
+      // Allow only digits and limit to 10 characters
+      const sanitized = value.replace(/\D/g, '').slice(0, 10);
+      setFormData({
+        ...formData,
+        [name]: sanitized
+      });
+    } else if (name === 'name') {
+      // Remove leading/trailing spaces and limit length
+      const sanitized = value.slice(0, 100);
+      setFormData({
+        ...formData,
+        [name]: sanitized
+      });
+    } else if (name === 'email') {
+      // Convert to lowercase and trim
+      const sanitized = value.toLowerCase().trim().slice(0, 100);
+      setFormData({
+        ...formData,
+        [name]: sanitized
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value.slice(0, 255) // Limit address length
+      });
+    }
+
+    // Clear error when typing
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: ''
+      });
+    }
+
+    // Clear submit error
+    if (submitError) {
+      setSubmitError('');
     }
   };
 
-  const handleChange = (e) => {
+  const handleEditVendor = (vendor) => {
     setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
+      name: vendor.name,
+      email: vendor.email,
+      phone: vendor.phone,
+      address: vendor.address || ''
     });
+    setSelectedVendorId(vendor.id);
+    setIsEditing(true);
+    setFormErrors({ name: '', email: '', phone: '' });
+    setSubmitError('');
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      let result;
+      const vendorData = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone,
+        address: formData.address.trim()
+      };
+
+      if (isEditing && selectedVendorId !== null) {
+        result = await onUpdateVendor(selectedVendorId, vendorData);
+        if (result.success) {
+          alert('Vendor updated successfully!');
+          // Clear edit mode and form after successful update
+          setIsEditing(false);
+          setSelectedVendorId(null);
+          setFormData({ name: '', email: '', phone: '', address: '' });
+          // Remove edit parameter from URL
+          const url = new URL(window.location);
+          url.searchParams.delete('edit');
+          window.history.pushState(null, '', url);
+          // Return to vendor list
+          onBack();
+        }
+      } else {
+        result = await onAddVendor(vendorData);
+        if (result.success) {
+          alert('Vendor added successfully!');
+          setFormData({ name: '', email: '', phone: '', address: '' });
+        }
+      }
+
+      if (!result.success) {
+        setSubmitError(result.error || 'An error occurred while saving the vendor');
+      }
+    } catch (error) {
+      setSubmitError('An unexpected error occurred');
+      console.error('Submit error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Clear edit mode and form
+    setFormData({ name: '', email: '', phone: '', address: '' });
+    setFormErrors({ name: '', email: '', phone: '' });
+    setIsEditing(false);
+    setSelectedVendorId(null);
+    setSubmitError('');
+    // Remove edit parameter from URL
+    const url = new URL(window.location);
+    url.searchParams.delete('edit');
+    window.history.pushState(null, '', url);
+    // Return to previous screen
+    onBack();
   };
 
   return (
     <div className="content-panel">
-      <h2 className="section-title">Add New Vendor</h2>
-      {error && <div className="error-message">{error}</div>}
-      {success && (
-        <div className="success-message">
-          {success}
+      <h2 className="section-title">{isEditing ? 'Edit Vendor' : 'Add New Vendor'}</h2>
+      
+      {submitError && (
+        <div className="error-message" style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#fee', border: '1px solid #fcc', borderRadius: '4px', color: '#c33' }}>
+          {submitError}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="vendor-form">
+
+      <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="name">Name</label>
+          <label className="form-label">
+            Name <span style={{ color: '#ef4444' }}>*</span>
+          </label>
           <input
             type="text"
-            id="name"
             name="name"
-            className="form-input"
             value={formData.name}
-            onChange={handleChange}
+            onChange={handleInputChange}
+            className={`form-input ${formErrors.name ? 'input-error' : ''}`}
             placeholder="Enter vendor name"
+            maxLength="100"
             required
+            disabled={isSubmitting}
           />
+          {formErrors.name && (
+            <div style={{ color: '#ef4444', fontSize: '14px', marginTop: '4px' }}>
+              {formErrors.name}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label className="form-label">
+            Email <span style={{ color: '#ef4444' }}>*</span>
+          </label>
           <input
             type="email"
-            id="email"
             name="email"
-            className="form-input"
             value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter vendor email"
+            onChange={handleInputChange}
+            className={`form-input ${formErrors.email ? 'input-error' : ''}`}
+            placeholder="Enter email address"
+            maxLength="100"
             required
+            disabled={isSubmitting}
           />
+          {formErrors.email && (
+            <div style={{ color: '#ef4444', fontSize: '14px', marginTop: '4px' }}>
+              {formErrors.email}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
-          <label htmlFor="phone">Phone</label>
+          <label className="form-label">
+            Phone <span style={{ color: '#ef4444' }}>*</span>
+          </label>
           <input
             type="tel"
-            id="phone"
             name="phone"
-            className="form-input"
             value={formData.phone}
-            onChange={handleChange}
-            placeholder="Enter vendor phone"
+            onChange={handleInputChange}
+            maxLength="10"
+            className={`form-input ${formErrors.phone ? 'input-error' : ''}`}
+            placeholder="Enter 10-digit phone number"
             required
+            disabled={isSubmitting}
           />
+          {formErrors.phone && (
+            <div style={{ color: '#ef4444', fontSize: '14px', marginTop: '4px' }}>
+              {formErrors.phone}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
-          <label htmlFor="address">Address</label>
+          <label className="form-label">Address</label>
           <textarea
-            id="address"
             name="address"
-            className="form-input"
             value={formData.address}
-            onChange={handleChange}
-            placeholder="Enter vendor address"
+            onChange={handleInputChange}
+            className="form-input"
+            placeholder="Enter address (optional)"
+            maxLength="255"
             rows="3"
-            required
+            disabled={isSubmitting}
           />
         </div>
 
         <div className="button-group">
-          <button type="submit" className="btn btn-blue">
-            Add Vendor
-          </button>
           <button 
-            type="button" 
-            className="btn btn-gray"
-            onClick={() => setFormData({ name: '', email: '', phone: '', address: '' })}
+            type="submit" 
+            className="btn btn-blue"
+            disabled={isSubmitting}
           >
-            Clear Form
+            {isSubmitting ? 'Saving...' : (isEditing ? 'Update Vendor' : 'Add Vendor')}
+          </button>
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="btn btn-gray"
+            disabled={isSubmitting}
+          >
+            Cancel
           </button>
         </div>
       </form>
     </div>
   );
-};
-
-export default AddVendor;
+}
