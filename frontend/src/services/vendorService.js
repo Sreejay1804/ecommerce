@@ -1,102 +1,86 @@
-const BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = '/api/vendors';
+
+// Create axios-like functionality with proper error handling
+const apiRequest = async (url, options = {}) => {
+  const config = {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  try {
+    const response = await fetch(url, config);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    // Handle empty responses (like DELETE)
+    if (response.status === 204) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Request Error:', error);
+    throw error;
+  }
+};
 
 const vendorService = {
+  // Get all vendors
   getVendors: async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/vendors`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add any auth headers if needed
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching vendors:', error);
-      return []; // Return empty array instead of throwing error
-    }
+    return await apiRequest(API_BASE_URL);
   },
 
+  // Get vendor by ID
   getVendorById: async (id) => {
-    try {
-      const response = await fetch(`${BASE_URL}/vendors/${id}`);
-      if (!response.ok) throw new Error('Failed to fetch vendor');
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching vendor:', error);
-      throw error;
-    }
+    return await apiRequest(`${API_BASE_URL}/${id}`);
   },
 
-  addVendor: async (vendorData) => {
-    try {
-      const response = await fetch(`${BASE_URL}/vendors`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(vendorData),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error adding vendor:', error);
-      throw error;
-    }
+  // Create new vendor
+  createVendor: async (vendorData) => {
+    return await apiRequest(API_BASE_URL, {
+      method: 'POST',
+      body: JSON.stringify(vendorData),
+    });
   },
 
+  // Update vendor
   updateVendor: async (id, vendorData) => {
-    try {
-      const response = await fetch(`${BASE_URL}/vendors/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(vendorData),
-      });
-      if (!response.ok) throw new Error('Failed to update vendor');
-      return await response.json();
-    } catch (error) {
-      console.error('Error updating vendor:', error);
-      throw error;
-    }
+    return await apiRequest(`${API_BASE_URL}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(vendorData),
+    });
   },
 
-  deleteVendor: async (vendorId) => {
-    try {
-      const response = await fetch(`${BASE_URL}/vendors/${vendorId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error deleting vendor:', error);
-      throw error;
-    }
+  // Delete vendor
+  deleteVendor: async (id) => {
+    return await apiRequest(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+    });
   },
 
-  searchVendors: async (name) => {
+  // Search vendors
+  searchVendors: async (searchTerm) => {
+    const encodedTerm = encodeURIComponent(searchTerm || '');
+    return await apiRequest(`${API_BASE_URL}/search?term=${encodedTerm}`);
+  },
+
+  // Test connection
+  testConnection: async () => {
     try {
-      const response = await fetch(`${BASE_URL}/vendors/search?name=${encodeURIComponent(name)}`);
-      if (!response.ok) throw new Error('Failed to search vendors');
-      return await response.json();
+      await apiRequest(API_BASE_URL);
+      return { success: true, message: 'Connection successful' };
     } catch (error) {
-      console.error('Error searching vendors:', error);
-      throw error;
+      return { 
+        success: false, 
+        message: error.message || 'Failed to connect to server' 
+      };
     }
   }
 };

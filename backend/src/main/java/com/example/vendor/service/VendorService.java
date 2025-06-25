@@ -26,21 +26,53 @@ public class VendorService {
     }
 
     public Vendor createVendor(Vendor vendor) {
+        // Check for duplicate email
         if (vendorRepository.existsByEmail(vendor.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new IllegalArgumentException("A vendor with this email already exists");
         }
+        
+        // Check for duplicate phone
         if (vendorRepository.existsByPhone(vendor.getPhone())) {
-            throw new IllegalArgumentException("Phone number already exists");
+            throw new IllegalArgumentException("A vendor with this phone number already exists");
         }
+        
+        // Check for duplicate GST number
+        if (vendorRepository.existsByGstNumber(vendor.getGstNumber())) {
+            throw new IllegalArgumentException("A vendor with this GST number already exists");
+        }
+        
         return vendorRepository.save(vendor);
     }
 
     public Vendor updateVendor(Long id, Vendor vendorDetails) {
         Vendor vendor = getVendorById(id);
+        
+        // Check for duplicate email (excluding current vendor)
+        if (!vendor.getEmail().equals(vendorDetails.getEmail()) && 
+            vendorRepository.existsByEmail(vendorDetails.getEmail())) {
+            throw new IllegalArgumentException("A vendor with this email already exists");
+        }
+        
+        // Check for duplicate phone (excluding current vendor)
+        if (!vendor.getPhone().equals(vendorDetails.getPhone()) && 
+            vendorRepository.existsByPhone(vendorDetails.getPhone())) {
+            throw new IllegalArgumentException("A vendor with this phone number already exists");
+        }
+        
+        // Check for duplicate GST number (excluding current vendor)
+        if (!vendor.getGstNumber().equals(vendorDetails.getGstNumber()) && 
+            vendorRepository.existsByGstNumber(vendorDetails.getGstNumber())) {
+            throw new IllegalArgumentException("A vendor with this GST number already exists");
+        }
+        
+        // Update fields
         vendor.setName(vendorDetails.getName());
         vendor.setEmail(vendorDetails.getEmail());
         vendor.setPhone(vendorDetails.getPhone());
         vendor.setAddress(vendorDetails.getAddress());
+        vendor.setGstNumber(vendorDetails.getGstNumber());
+        vendor.setDescription(vendorDetails.getDescription());
+        
         return vendorRepository.save(vendor);
     }
 
@@ -52,6 +84,9 @@ public class VendorService {
     }
 
     public List<Vendor> searchVendors(String name) {
-        return vendorRepository.findByNameContainingIgnoreCase(name);
+        if (name == null || name.trim().isEmpty()) {
+            return getAllVendors();
+        }
+        return vendorRepository.findByNameContainingIgnoreCase(name.trim());
     }
 }

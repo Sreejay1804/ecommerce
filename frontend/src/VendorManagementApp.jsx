@@ -7,7 +7,7 @@ import { useVendor } from './contexts/VendorContext';
 import vendorService from './services/vendorService';
 import './styles/VendorManagement.css';
 
-const VENDOR_API = 'http://localhost:8080/api/vendors';
+const VENDOR_API = '/api/vendors';
 
 export default function VendorManagementApp() {
   const { user, logout } = useAuth();
@@ -35,31 +35,44 @@ export default function VendorManagementApp() {
   }, []);
 
   const addVendor = async (data) => {
-    // Prevent adding if email or phone already exists in the vendor list
+    // Client-side validation - check for duplicates
     const emailExists = vendors.some(
       (vendor) => vendor.email.toLowerCase() === data.email.toLowerCase()
     );
     const phoneExists = vendors.some(
       (vendor) => vendor.phone === data.phone
     );
+    const gstExists = vendors.some(
+      (vendor) => vendor.gstNumber === data.gstNumber
+    );
+    
     if (emailExists) {
       return { success: false, error: 'A vendor with this email already exists' };
     }
     if (phoneExists) {
       return { success: false, error: 'A vendor with this phone number already exists' };
     }
+    if (gstExists) {
+      return { success: false, error: 'A vendor with this GST number already exists' };
+    }
+
     try {
       const res = await fetch(VENDOR_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error('Failed to add vendor');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to add vendor');
+      }
+      
       const newVendor = await res.json();
       setVendors([...vendors, newVendor]);
       return { success: true };
     } catch (err) {
-      console.error(err);
+      console.error('Add vendor error:', err);
       return { success: false, error: err.message };
     }
   };
@@ -71,12 +84,17 @@ export default function VendorManagementApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error('Failed to update vendor');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update vendor');
+      }
+      
       const updated = await res.json();
       setVendors(vendors.map(v => v.id === id ? updated : v));
       return { success: true };
     } catch (err) {
-      console.error(err);
+      console.error('Update vendor error:', err);
       return { success: false, error: err.message };
     }
   };
@@ -84,11 +102,14 @@ export default function VendorManagementApp() {
   const deleteVendor = async (id) => {
     try {
       const res = await fetch(`${VENDOR_API}/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete vendor');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete vendor');
+      }
       setVendors(vendors.filter(v => v.id !== id));
       return { success: true };
     } catch (err) {
-      console.error(err);
+      console.error('Delete vendor error:', err);
       return { success: false, error: err.message };
     }
   };
@@ -96,14 +117,19 @@ export default function VendorManagementApp() {
   const searchVendors = async (term) => {
     if (!term.trim()) return vendors;
     try {
-      const res = await fetch(`${VENDOR_API}/search?term=${encodeURIComponent(term)}`);
+      // Updated to use the backend search endpoint properly
+      const res = await fetch(`${VENDOR_API}/search?name=${encodeURIComponent(term)}`);
       if (!res.ok) throw new Error('Search failed');
       return await res.json();
     } catch (err) {
-      console.error(err);
+      console.error('Search error:', err);
+      // Fallback to client-side search
       return vendors.filter(v =>
         v.name.toLowerCase().includes(term.toLowerCase()) ||
-        v.email.toLowerCase().includes(term.toLowerCase())
+        v.email.toLowerCase().includes(term.toLowerCase()) ||
+        v.phone.includes(term) ||
+        (v.address && v.address.toLowerCase().includes(term.toLowerCase())) ||
+        (v.gstNumber && v.gstNumber.toLowerCase().includes(term.toLowerCase()))
       );
     }
   };
@@ -195,6 +221,8 @@ export default function VendorManagementApp() {
                   <th>Email</th>
                   <th>Phone</th>
                   <th>Address</th>
+                  <th>GST Number</th>
+                  <th>Description</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -205,6 +233,8 @@ export default function VendorManagementApp() {
                     <td>{vendor.email}</td>
                     <td>{vendor.phone}</td>
                     <td>{vendor.address || 'N/A'}</td>
+                    <td>{vendor.gstNumber || 'N/A'}</td>
+                    <td>{vendor.description || 'N/A'}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <button 
