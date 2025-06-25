@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
+import AddProduct from './components/AddProduct';
+import AddProduct1 from './components/AddProduct1';
 import AddVendor from './components/AddVendor';
 import DeleteVendor from './components/DeleteVendor';
 import EnquireVendor from './components/EnquireVendor';
+import ManageProducts from './components/ManageProducts';
+import SearchProducts from './components/SearchProducts';
 import { useAuth } from './contexts/AuthContext';
 import { useVendor } from './contexts/VendorContext';
+import './CustomerManagementApp.css';
+import productService from './services/productService';
 import vendorService from './services/vendorService';
-import './styles/VendorManagement.css';
+//import './styles/Products.css';
 
 const VENDOR_API = '/api/vendors';
 
@@ -15,6 +21,10 @@ export default function VendorManagementApp() {
   const [activeMenu, setActiveMenu] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [productPanel, setProductPanel] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [activeModule, setActiveModule] = useState('vendor'); // 'vendor' or 'item'
 
   const fetchVendors = async () => {
     setLoading(true);
@@ -30,9 +40,34 @@ export default function VendorManagementApp() {
     }
   };
 
+  const fetchProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Use getItems for item management module
+      const data = activeModule === 'item' 
+        ? await productService.getItems() 
+        : await productService.getProducts();
+      setProducts(data || []);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      if (activeModule === 'item') {
+        setError('Unable to connect to the server. Please check if the backend is running on http://localhost:8080');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchVendors();
+    fetchProducts();
   }, []);
+
+  useEffect(() => {
+    // Refetch products when switching modules
+    fetchProducts();
+  }, [activeModule]);
 
   const addVendor = async (data) => {
     // Client-side validation - check for duplicates
@@ -114,6 +149,81 @@ export default function VendorManagementApp() {
     }
   };
 
+  // Product management functions for vendor module
+  const addProduct = async (data) => {
+    const newProd = await productService.addProduct(data);
+    setProducts([...products, newProd]);
+  };
+
+  const updateProduct = async (id, data) => {
+    const updated = await productService.updateProduct(id, data);
+    setProducts(products.map(p => p.id === id ? updated : p));
+  };
+
+  const deleteProduct = async (id) => {
+    await productService.deleteProduct(id);
+    setProducts(products.filter(p => p.id !== id));
+  };
+
+  // Item management functions for item module
+  const addItem = async (productData) => {
+    try {
+      const newProduct = await productService.addItem(productData);
+      setProducts(prevProducts => [...prevProducts, newProduct]);
+      return newProduct;
+    } catch (err) {
+      console.error('Error adding product:', err);
+      throw err;
+    }
+  };
+
+  const updateItem = async (id, productData) => {
+    try {
+      const updatedProduct = await productService.updateItem(id, productData);
+      setProducts(prevProducts => 
+        prevProducts.map(product => product.id === id ? updatedProduct : product)
+      );
+      return updatedProduct;
+    } catch (err) {
+      console.error('Error updating product:', err);
+      throw err;
+    }
+  };
+
+  const deleteItem = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+    
+    try {
+      await productService.deleteItem(id);
+      setProducts(prevProducts => prevProducts.filter(product => product.id !== id));
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      alert('Failed to delete product. Please try again.');
+    }
+  };
+
+  const searchProducts = async (term) => {
+    if (activeModule === 'item') {
+      if (!term.trim()) {
+        return products;
+      }
+      try {
+        return await productService.searchItems(term);
+      } catch (err) {
+        console.error('Error searching products:', err);
+        // Fallback to local search if backend search fails
+        return products.filter(product =>
+          product.name.toLowerCase().includes(term.toLowerCase()) ||
+          product.category.toLowerCase().includes(term.toLowerCase())
+        );
+      }
+    } else {
+      return await productService.searchProducts(term);
+    }
+  };
+
   const searchVendors = async (term) => {
     if (!term.trim()) return vendors;
     try {
@@ -166,6 +276,141 @@ export default function VendorManagementApp() {
       default:
         return null;
     }
+  };
+
+  const renderProductPanel = () => {
+    switch (productPanel) {
+      case 'add':
+        return <AddProduct onAddProduct={addProduct} onUpdateProduct={updateProduct} editingProduct={editingProduct} onBack={() => { setProductPanel(null); setEditingProduct(null); }} />;
+      case 'manage':
+        return <ManageProducts products={products} onEdit={prod => { setEditingProduct(prod); setProductPanel('add'); }} onDelete={deleteProduct} onBack={() => setProductPanel(null)} />;
+      case 'search':
+        return <SearchProducts onSearch={searchProducts} onBack={() => setProductPanel(null)} />;
+      default:
+        return (
+          <div className="content-panel">
+            <h2 className="section-title">Product Management</h2>
+            <div className="customer-actions-row" style={{ marginTop: '20px' }}>
+              <button className="btn btn-blue" onClick={() => setProductPanel('add')}>Add New Product</button>
+              <button className="btn btn-green" onClick={() => setProductPanel('manage')}>Manage Products</button>
+              <button className="btn btn-purple" onClick={() => setProductPanel('search')}>Search Products</button>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  const renderItemManagement = () => {
+    if (loading && products.length === 0) {
+      return (
+        <div className="content-panel">
+          <h2 className="section-title">Loading products...</h2>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {error && (
+          <div style={{ 
+            background: '#fee', 
+            color: '#c00', 
+            padding: '16px', 
+            marginBottom: '16px', 
+            borderRadius: '4px',
+            border: '1px solid #fcc'
+          }}>
+            {error}
+          </div>
+        )}
+        
+        {activeMenu === null && (
+          <div className="content-panel">
+            <h2 className="section-title">Product Management</h2>
+            <div className="customer-actions-row" style={{ marginTop: '20px' }}>
+              <button 
+                className="btn btn-blue" 
+                onClick={() => { 
+                  setActiveMenu('add'); 
+                  setEditingProduct(null); 
+                }}
+              >
+                Add New Product
+              </button>
+              <button 
+                className="btn btn-green" 
+                onClick={() => setActiveMenu('manage')}
+              >
+                Manage Products
+              </button>
+              <button 
+                className="btn btn-purple" 
+                onClick={() => setActiveMenu('search')}
+              >
+                Search Products
+              </button>
+            </div>
+            
+            {products.length > 0 && (
+              <div style={{ marginTop: '30px' }}>
+                <h3>Recent Products ({products.length} total)</h3>
+                <table className="customer-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Category</th>
+                      <th>Unit Price</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.slice(0, 5).map(product => (
+                      <tr key={product.id}>
+                        <td>{product.name}</td>
+                        <td>{product.category}</td>
+                        <td>₹{Number(product.unitPrice).toFixed(2)}</td>
+                        <td>{product.description || 'No description'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {activeMenu === 'add' && (
+          <AddProduct1
+            onAddProduct={addItem}
+            onUpdateProduct={updateItem}
+            editingProduct={editingProduct}
+            onBack={() => { 
+              setActiveMenu(null); 
+              setEditingProduct(null); 
+            }}
+          />
+        )}
+        
+        {activeMenu === 'manage' && (
+          <ManageProducts
+            products={products}
+            onEdit={product => { 
+              setEditingProduct(product); 
+              setActiveMenu('add'); 
+            }}
+            onDelete={deleteItem}
+            onBack={() => setActiveMenu(null)}
+          />
+        )}
+        
+        {activeMenu === 'search' && (
+          <SearchProducts
+            onSearch={searchProducts}
+            onBack={() => setActiveMenu(null)}
+          />
+        )}
+      </>
+    );
   };
 
   const renderVendorButtons = () => {
@@ -293,6 +538,14 @@ export default function VendorManagementApp() {
     }
   };
 
+  const handleModuleSwitch = (module) => {
+    setActiveModule(module);
+    setActiveMenu(null);
+    setProductPanel(null);
+    setEditingProduct(null);
+    setError(null);
+  };
+
   return (
     <div className="app-container">
       <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -302,7 +555,20 @@ export default function VendorManagementApp() {
           </div>
           <div className="sidebar-content">
             <div className="sidebar-item">
-              <button onClick={() => setActiveMenu(null)} className="sidebar-button">Vendor</button>
+              <button 
+                onClick={() => handleModuleSwitch('vendor')} 
+                className={`sidebar-button${activeModule === 'vendor' ? ' active' : ''}`}
+              >
+                Vendor
+              </button>
+            </div>
+            <div className="sidebar-item">
+              <button 
+                onClick={() => handleModuleSwitch('item')} 
+                className={`sidebar-button${activeModule === 'item' ? ' active' : ''}`}
+              >
+                Items
+              </button>
             </div>
           </div>
         </div>
@@ -311,8 +577,10 @@ export default function VendorManagementApp() {
         <div className="sidebar-footer" style={{ padding: '16px', marginTop: 'auto' }}>
           {user && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              
+              <button className="btn btn-logout" onClick={logout}>Logout</button>
               <span style={{ fontSize: '14px', marginBottom: '8px' }}>Logged in as <b>{user.username}</b></span>
-              <button className="btn btn-red" onClick={logout}>Logout</button>
+              
             </div>
           )}
         </div>
@@ -320,12 +588,20 @@ export default function VendorManagementApp() {
 
       <div className="main-container">
         <main className="main-content">
-          {/* First render the panel */}
-          {renderPanel()}
-          {/* Then render vendor buttons if we're in vendor module */}
-          {renderVendorButtons()}
-          {/* Finally render the vendor list if we're in vendor module */}
-          {renderVendorList()}
+          {activeModule === 'vendor' ? (
+            <>
+              {/* First render the panel */}
+              {renderPanel()}
+              {/* Then render vendor buttons if we're in vendor module */}
+              {renderVendorButtons()}
+              {/* Finally render the vendor list if we're in vendor module */}
+              {renderVendorList()}
+              {/* Render product management panel, hidden by default */}
+              {productPanel !== null && renderProductPanel()}
+            </>
+          ) : (
+            renderItemManagement()
+          )}
         </main>
       </div>
     </div>
