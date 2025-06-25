@@ -1,11 +1,13 @@
 package com.example.customermanagement.service;
 
-import com.example.customermanagement.model.Vendor;
-import com.example.customermanagement.repository.VendorRepository;
-import com.example.customermanagement.exception.ResourceNotFoundException;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.List;
+
+import com.example.customermanagement.exception.ResourceNotFoundException;
+import com.example.customermanagement.model.Vendor;
+import com.example.customermanagement.repository.VendorRepository;
 
 @Service
 public class VendorService {

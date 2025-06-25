@@ -1,10 +1,12 @@
 package com.example.customermanagement.repository;
 
-import com.example.customermanagement.model.Vendor;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import java.util.List;
+
+import com.example.customermanagement.model.Vendor;
 
 public interface VendorRepository extends JpaRepository<Vendor, Long> {
     boolean existsByEmail(String email);
