@@ -55,3 +55,45 @@ INSERT INTO vendors (name, email, phone, address, gst_number, description) VALUE
 ('XYZ Textiles', 'contact@xyztextiles.com', '9876543211', '456 Market Road, Delhi, NCR', '07XYZAB5678G2W6', 'Textile and fabric manufacturer'),
 ('PQR Services', 'info@pqrservices.com', '9876543212', '789 Business Park, Bangalore, Karnataka', '29PQRST9012H3X7', 'IT and consulting services')
 ON CONFLICT (email) DO NOTHING;
+
+-- Create Database
+CREATE DATABASE IF NOT EXISTS customer_management;
+USE customer_management;
+
+-- Create vendor_invoices table
+CREATE TABLE vendor_invoices (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    invoice_no VARCHAR(255) NOT NULL UNIQUE,
+    vendor_id BIGINT NOT NULL,
+    vendor_name VARCHAR(255) NOT NULL,
+    vendor_address TEXT,
+    vendor_phone VARCHAR(20),
+    date_time VARCHAR(255) NOT NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
+    total_tax DECIMAL(10,2) NOT NULL,
+    grand_total DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Create vendor_invoice_items table
+CREATE TABLE vendor_invoice_items (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    vendor_invoice_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    category VARCHAR(255),
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    cgst_percent DECIMAL(5,2) NOT NULL,
+    sgst_percent DECIMAL(5,2) NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (vendor_invoice_id) REFERENCES vendor_invoices(id) ON DELETE CASCADE
+);
+
+-- Create indexes for better performance
+CREATE INDEX idx_vendor_invoices_vendor_id ON vendor_invoices(vendor_id);
+CREATE INDEX idx_vendor_invoices_invoice_no ON vendor_invoices(invoice_no);
+CREATE INDEX idx_vendor_invoices_date_time ON vendor_invoices(date_time);
+CREATE INDEX idx_vendor_invoice_items_product_id ON vendor_invoice_items(product_id);
+CREATE INDEX idx_vendor_invoice_items_category ON vendor_invoice_items(category);

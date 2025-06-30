@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react';
 import AddProduct from './components/AddProduct';
 import AddProduct1 from './components/AddProduct1';
 import AddVendor from './components/AddVendor';
+import CreateVendorInvoice from './components/CreateVendorInvoice';
 import DeleteVendor from './components/DeleteVendor';
 import EnquireVendor from './components/EnquireVendor';
 import ManageProducts from './components/ManageProducts';
 import SearchProducts from './components/SearchProducts';
+import SearchVendorInvoice from './components/SearchVendorInvoice';
+import VendorInvoiceModule from './components/VendorInvoiceModule';
 import { useAuth } from './contexts/AuthContext';
 import { useVendor } from './contexts/VendorContext';
 import './CustomerManagementApp.css';
@@ -25,6 +28,7 @@ export default function VendorManagementApp() {
   const [productPanel, setProductPanel] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [activeModule, setActiveModule] = useState('vendor'); // 'vendor' or 'item'
+  const [activeInvoicePage, setActiveInvoicePage] = useState(null); // null | 'create' | 'search'
 
   const fetchVendors = async () => {
     setLoading(true);
@@ -413,8 +417,23 @@ export default function VendorManagementApp() {
     );
   };
 
+  const renderVendorInvoiceModule = () => {
+    if (activeInvoicePage === 'create') {
+      return <CreateVendorInvoice onBack={() => setActiveInvoicePage(null)} />;
+    }
+    if (activeInvoicePage === 'search') {
+      return <SearchVendorInvoice onBack={() => setActiveInvoicePage(null)} />;
+    }
+    return (
+      <VendorInvoiceModule
+        onCreateInvoice={() => setActiveInvoicePage('create')}
+        onSearchInvoice={() => setActiveInvoicePage('search')}
+      />
+    );
+  };
+
   const renderVendorButtons = () => {
-    if (!activeMenu) {
+    if (!activeMenu && !activeInvoicePage) {
       return (
         <div className="content-panel">
           <h2 className="section-title">Vendor Management</h2>
@@ -437,6 +456,12 @@ export default function VendorManagementApp() {
             >
               Delete/Modify Vendor
             </button>
+            <button
+              onClick={() => setActiveInvoicePage('module')}
+              className="btn btn-purple"
+            >
+              Invoice
+            </button>
           </div>
         </div>
       );
@@ -445,7 +470,7 @@ export default function VendorManagementApp() {
   };
 
   const renderVendorList = () => {
-    if (activeMenu !== null) return null;
+    if (activeMenu !== null || activeInvoicePage) return null;
 
     return (
       <div className="table-container">
@@ -546,6 +571,34 @@ export default function VendorManagementApp() {
     setError(null);
   };
 
+  const renderDashboard = () => {
+    return (
+      <div className="content-panel">
+        <h2 className="section-title">Dashboard</h2>
+        <div className="customer-actions-row" style={{ marginTop: '20px', display: 'flex', gap: '20px' }}>
+          <button 
+            className="btn btn-blue" 
+            onClick={() => setActiveMenu('add')}
+          >
+            Add Vendor
+          </button>
+          <button 
+            className="btn btn-green" 
+            onClick={() => setActiveMenu('enquire')}
+          >
+            Enquire Vendor
+          </button>
+          <button 
+            className="btn btn-red" 
+            onClick={() => setActiveMenu('delete')}
+          >
+            Delete/Modify Vendor
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="app-container">
       <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -570,6 +623,14 @@ export default function VendorManagementApp() {
                 Items
               </button>
             </div>
+            <div className="sidebar-item">
+              <button
+                onClick={() => setActiveInvoicePage('module')}
+                className={`sidebar-button${activeInvoicePage ? ' active' : ''}`}
+              >
+                Invoice
+              </button>
+            </div>
           </div>
         </div>
         {/* Spacer to push logout to the bottom */}
@@ -590,14 +651,15 @@ export default function VendorManagementApp() {
         <main className="main-content">
           {activeModule === 'vendor' ? (
             <>
-              {/* First render the panel */}
-              {renderPanel()}
-              {/* Then render vendor buttons if we're in vendor module */}
-              {renderVendorButtons()}
-              {/* Finally render the vendor list if we're in vendor module */}
-              {renderVendorList()}
-              {/* Render product management panel, hidden by default */}
-              {productPanel !== null && renderProductPanel()}
+              {activeMenu === null && !activeInvoicePage && renderDashboard()}
+              {activeInvoicePage && renderVendorInvoiceModule()}
+              {!activeInvoicePage && activeMenu !== null && (
+                <>
+                  {renderPanel()}
+                  {renderVendorList()}
+                  {productPanel !== null && renderProductPanel()}
+                </>
+              )}
             </>
           ) : (
             renderItemManagement()
