@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Add this import
 import { useVendor } from '../contexts/VendorContext';
 import productService from '../services/productService'; // Updated import
 
 export default function CreateVendorInvoice({ onBack }) {
+  const navigate = useNavigate(); // Add this line
   const { vendors } = useVendor();
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [vendorSearchTerm, setVendorSearchTerm] = useState('');
@@ -15,6 +17,7 @@ export default function CreateVendorInvoice({ onBack }) {
     vendorName: '',
     address: '',
     mobile: '',
+    vendorGstNumber: '', // Initialize GST number in state
     items: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -173,6 +176,7 @@ export default function CreateVendorInvoice({ onBack }) {
         vendorName: selectedVendor.name,
         vendorAddress: selectedVendor.address,
         vendorPhone: selectedVendor.phone,
+        vendorGstNumber: invoiceData.vendorGstNumber, // Save GST number
         dateTime: invoiceData.dateTime,
         items: invoiceData.items.map(item => ({
           productId: parseInt(item.productId),
@@ -324,7 +328,7 @@ export default function CreateVendorInvoice({ onBack }) {
           <input
             type="text"
             value={invoiceData.vendorName}
-            onChange={(e) => setInvoiceData(prev => ({ ...prev, vendorName: e.target.value }))}
+            onChange={(e) => setInvoiceData(prev => ({ ...prev, vendorName: e.target.value, vendorGstNumber: '' }))}
             style={{
               width: '100%',
               padding: '8px',
@@ -332,12 +336,22 @@ export default function CreateVendorInvoice({ onBack }) {
               borderRadius: '4px'
             }}
           />
-          {/* GST Number Display */}
-          {(invoiceData.vendorGstNumber || (selectedVendor && selectedVendor.gstNumber)) && (
-            <div style={{ marginTop: '8px', color: '#6366f1', fontWeight: 'bold' }}>
-              GST Number: {invoiceData.vendorGstNumber || selectedVendor?.gstNumber || 'N/A'}
-            </div>
-          )}
+          {/* GST Number Input */}
+          <label style={{ display: 'block', margin: '8px 0 4px 0', fontWeight: 'bold' }}>
+            GST Number
+          </label>
+          <input
+            type="text"
+            value={invoiceData.vendorGstNumber}
+            onChange={e => setInvoiceData(prev => ({ ...prev, vendorGstNumber: e.target.value }))}
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px'
+            }}
+            placeholder="Enter GST Number"
+          />
         </div>
 
         {/* Date & Time */}
@@ -530,7 +544,13 @@ export default function CreateVendorInvoice({ onBack }) {
       {/* Action Buttons */}
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
         <button
-          onClick={onBack}
+          onClick={() => {
+            if (typeof onBack === 'function') {
+              onBack();
+            } else {
+              navigate('/vendor-invoice');
+            }
+          }}
           className="btn"
           style={{
             padding: '10px 20px',

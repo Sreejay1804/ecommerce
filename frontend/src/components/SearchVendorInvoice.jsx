@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function SearchVendorInvoice({ handleBack }) {
+export default function SearchVendorInvoice({ handleBack, onBack }) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -584,7 +586,18 @@ export default function SearchVendorInvoice({ handleBack }) {
           >
             {loading ? 'Searching...' : 'Search'}
           </button>
-          <button onClick={handleBack} className="btn btn-gray">
+          <button
+            onClick={() => {
+              if (typeof handleBack === 'function') {
+                handleBack();
+              } else if (typeof onBack === 'function') {
+                onBack();
+              } else {
+                navigate('/vendor-invoice');
+              }
+            }}
+            className="btn btn-gray"
+          >
             Back
           </button>
         </div>
@@ -605,6 +618,7 @@ export default function SearchVendorInvoice({ handleBack }) {
                   <tr>
                     <th>Invoice No</th>
                     <th>Vendor Name</th>
+                    <th>GST Number</th>
                     <th>Mobile</th>
                     <th>Date</th>
                     <th>Total Amount</th>
@@ -616,6 +630,7 @@ export default function SearchVendorInvoice({ handleBack }) {
                     <tr key={invoice.id}>
                       <td>{invoice.invoiceNo}</td>
                       <td>{invoice.vendorName}</td>
+                      <td>{invoice.vendorGstNumber || 'N/A'}</td>
                       <td>{invoice.vendorPhone}</td>
                       <td>{invoice.dateTime}</td>
                       <td>₹{invoice.grandTotal?.toFixed(2)}</td>
