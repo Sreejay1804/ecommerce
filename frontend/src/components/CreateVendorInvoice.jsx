@@ -69,7 +69,8 @@ export default function CreateVendorInvoice({ onBack }) {
       ...prev,
       vendorName: vendor.name,
       address: vendor.address || '',
-      mobile: vendor.phone
+      mobile: vendor.phone,
+      vendorGstNumber: vendor.gstNumber || '' // Add GST number to invoiceData
     }));
     setVendorSearchTerm(vendor.name);
     setShowVendorDropdown(false);
@@ -331,6 +332,12 @@ export default function CreateVendorInvoice({ onBack }) {
               borderRadius: '4px'
             }}
           />
+          {/* GST Number Display */}
+          {(invoiceData.vendorGstNumber || (selectedVendor && selectedVendor.gstNumber)) && (
+            <div style={{ marginTop: '8px', color: '#6366f1', fontWeight: 'bold' }}>
+              GST Number: {invoiceData.vendorGstNumber || selectedVendor?.gstNumber || 'N/A'}
+            </div>
+          )}
         </div>
 
         {/* Date & Time */}
