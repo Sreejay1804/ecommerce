@@ -184,6 +184,41 @@ export default function SearchVendorInvoice({ handleBack, onBack }) {
       max-width: 1000px;
       position: relative;
     }
+    @media (max-width: 600px) {
+      .modal-content {
+        padding: 8px;
+        max-width: 98vw;
+        font-size: 14px;
+      }
+      .invoice-container {
+        padding: 8px;
+      }
+      .items-table th,
+      .items-table td {
+        padding: 4px;
+        font-size: 12px;
+      }
+      .modal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .form-input, .form-input-sm, textarea.form-input {
+        font-size: 14px;
+        padding: 6px;
+      }
+      .button-group {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .customer-table th, .customer-table td {
+        font-size: 12px;
+        padding: 4px;
+      }
+      .table-wrapper {
+        overflow-x: auto;
+      }
+    }
     .modal-header {
       display: flex;
       justify-content: space-between;

@@ -84,6 +84,58 @@ export default function ItemManagementApp() {
     }
   };
 
+  // Add responsive styles for mobile screens
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media (max-width: 600px) {
+        .app-container {
+          flex-direction: column !important;
+        }
+        .sidebar {
+          width: 100vw !important;
+          min-width: 0 !important;
+          max-width: 100vw !important;
+          height: auto !important;
+          position: static !important;
+        }
+        .sidebar-header, .sidebar-content, .sidebar-footer {
+          align-items: flex-start !important;
+        }
+        .main-container {
+          width: 100vw !important;
+          padding: 0 !important;
+        }
+        .main-content {
+          padding: 8px !important;
+        }
+        .content-panel, .table-container {
+          padding: 8px !important;
+        }
+        .customer-actions-row {
+          flex-direction: column !important;
+          gap: 8px !important;
+        }
+        .customer-table th, .customer-table td {
+          font-size: 12px !important;
+          padding: 4px !important;
+        }
+        .table-wrapper {
+          overflow-x: auto !important;
+        }
+        .btn, .btn-link {
+          font-size: 14px !important;
+          padding: 6px 10px !important;
+        }
+        .section-title, .section-subtitle {
+          font-size: 18px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
+
   if (loading && products.length === 0) {
     return (
       <div className="app-container">
