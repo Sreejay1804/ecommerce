@@ -49,9 +49,16 @@ export default function SearchVendorInvoice({ handleBack, onBack }) {
     setError('');
     try {
       const term = searchTerm.trim();
-      const url = term ? 
-        `/api/vendor-invoices/search?term=${encodeURIComponent(term)}` :
-        '/api/vendor-invoices';
+      let url = '/api/vendor-invoices';
+      if (term) {
+        if (/^INV\d+$/i.test(term)) {
+          url = `/api/vendor-invoices/search?vendorName=&invoiceNo=${encodeURIComponent(term)}`;
+        } else if (/^\d{10}$/.test(term)) {
+          url = `/api/vendor-invoices/search?vendorName=&mobile=${encodeURIComponent(term)}`;
+        } else {
+          url = `/api/vendor-invoices/search?vendorName=${encodeURIComponent(term)}`;
+        }
+      }
       const response = await fetch(url, {
         method: 'GET',
         headers: {

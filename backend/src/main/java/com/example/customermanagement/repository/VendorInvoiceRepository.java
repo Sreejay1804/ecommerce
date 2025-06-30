@@ -19,6 +19,8 @@ public interface VendorInvoiceRepository extends JpaRepository<VendorInvoice, Lo
     
     List<VendorInvoice> findByVendorNameContainingIgnoreCase(String vendorName);
     
+    List<VendorInvoice> findByVendorPhone(String vendorPhone);
+    
     @Query("SELECT vi FROM VendorInvoice vi WHERE vi.dateTime BETWEEN :startDate AND :endDate")
     List<VendorInvoice> findByDateTimeBetween(@Param("startDate") String startDate, @Param("endDate") String endDate);
     

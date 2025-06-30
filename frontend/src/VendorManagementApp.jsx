@@ -604,7 +604,16 @@ export default function VendorManagementApp() {
 
   return (
     <div className="app-container">
-      <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div className="sidebar" style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        height: '100vh',
+        backgroundImage: 'url("/sidebar-bg.jpg")',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
+        backgroundAttachment: 'fixed',
+        backgroundPosition: 'center',
+      }}>
         <div>
           <div className="sidebar-header">
             <h1 

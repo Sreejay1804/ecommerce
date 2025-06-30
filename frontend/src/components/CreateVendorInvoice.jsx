@@ -18,10 +18,23 @@ export default function CreateVendorInvoice({ onBack }) {
     address: '',
     mobile: '',
     vendorGstNumber: '', // Initialize GST number in state
-    items: []
+    items: [
+      {
+        id: Date.now(),
+        productId: '',
+        productName: '',
+        category: '',
+        quantity: 1,
+        unitPrice: 0,
+        cgstPercent: 9,
+        sgstPercent: 9,
+        total: 0
+      }
+    ]
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(''); // Notification state
 
   useEffect(() => {
     // Generate invoice number and set current date/time
@@ -82,17 +95,20 @@ export default function CreateVendorInvoice({ onBack }) {
   const addInvoiceItem = () => {
     setInvoiceData(prev => ({
       ...prev,
-      items: [...prev.items, {
-        id: Date.now(),
-        productId: '',
-        productName: '',
-        category: '',
-        quantity: 1,
-        unitPrice: 0,
-        cgstPercent: 18,
-        sgstPercent: 18,
-        total: 0
-      }]
+      items: [
+        ...prev.items,
+        {
+          id: Date.now(),
+          productId: '',
+          productName: '',
+          category: '',
+          quantity: 1,
+          unitPrice: 0,
+          cgstPercent: 9,
+          sgstPercent: 9,
+          total: 0
+        }
+      ]
     }));
   };
 
@@ -207,10 +223,182 @@ export default function CreateVendorInvoice({ onBack }) {
         throw new Error(errorData.message || 'Failed to create invoice');
       }
 
-      alert('Invoice created successfully!');
-      onBack();
+      setNotification('Invoice created successfully!');
+      setTimeout(() => {
+        setNotification('');
+        if (typeof onBack === 'function') {
+          onBack();
+        } else {
+          navigate('/vendor-invoice');
+        }
+      }, 1000);
     } catch (err) {
-      console.error('Error creating invoice:', err);
+      setError(err.message || 'Failed to create invoice. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Print helper for Save & Print (robust print preview)
+  const printInvoice = (invoiceData) => {
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice #${invoiceData.invoiceNo}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .invoice-header { margin-bottom: 20px; }
+            .customer-info { margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f8f9fa; }
+            .totals { margin-top: 20px; text-align: right; }
+            @media print {
+              body { margin: 0; padding: 20px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-header">
+            <h2>Invoice #${invoiceData.invoiceNo}</h2>
+            <p>Date: ${invoiceData.dateTime}</p>
+          </div>
+          <div class="customer-info">
+            <h3>Vendor Details</h3>
+            <p>Name: ${invoiceData.vendorName}</p>
+            <p>GST Number: ${invoiceData.vendorGstNumber || ''}</p>
+            <p>Mobile: ${invoiceData.vendorPhone || 'N/A'}</p>
+            <p>Address: ${invoiceData.vendorAddress || 'N/A'}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>CGST %</th>
+                <th>SGST %</th>
+                <th>Tax Amount</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoiceData.items.map(item => `
+                <tr>
+                  <td>${item.productName}</td>
+                  <td>${item.category || '-'}</td>
+                  <td>${item.quantity}</td>
+                  <td>₹${item.unitPrice?.toFixed(2)}</td>
+                  <td>${item.cgstPercent}%</td>
+                  <td>${item.sgstPercent}%</td>
+                  <td>₹${((item.quantity * item.unitPrice * (item.cgstPercent + item.sgstPercent)) / 100).toFixed(2)}</td>
+                  <td>₹${item.total?.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="totals">
+            <p><strong>Subtotal:</strong> ₹${(invoiceData.subtotal)?.toFixed(2)}</p>
+            <p><strong>Total Tax:</strong> ₹${(invoiceData.totalTax)?.toFixed(2)}</p>
+            <p><strong>Grand Total:</strong> ₹${(invoiceData.grandTotal)?.toFixed(2)}</p>
+          </div>
+        </body>
+      </html>
+    `;
+    
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(printContent);
+    doc.close();
+    // Wait for content to load before printing
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        document.body.removeChild(iframe);
+      }, 200);
+    };
+    // Fallback: if onload doesn't fire, use a timeout
+    setTimeout(() => {
+      if (document.body.contains(iframe)) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        document.body.removeChild(iframe);
+      }
+    }, 600);
+  };
+  // Save & Print handler
+  const handleSaveAndPrint = async () => {
+    if (!selectedVendor) {
+      setError('Please select a vendor');
+      return;
+    }
+    if (invoiceData.items.length === 0) {
+      setError('Please add at least one item');
+      return;
+    }
+    const invalidItems = invoiceData.items.filter(item => !item.productId);
+    if (invalidItems.length > 0) {
+      setError('Please select products for all items');
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const { subtotal, totalTax, grandTotal } = calculateTotals();
+      const invoicePayload = {
+        invoiceNo: invoiceData.invoiceNo,
+        vendorId: selectedVendor.id,
+        vendorName: selectedVendor.name,
+        vendorAddress: selectedVendor.address,
+        vendorPhone: selectedVendor.phone,
+        vendorGstNumber: invoiceData.vendorGstNumber,
+        dateTime: invoiceData.dateTime,
+        items: invoiceData.items.map(item => ({
+          productId: parseInt(item.productId),
+          productName: item.productName,
+          category: item.category,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          cgstPercent: item.cgstPercent,
+          sgstPercent: item.sgstPercent,
+          total: item.total
+        })),
+        subtotal,
+        totalTax,
+        grandTotal
+      };
+      const response = await fetch('http://localhost:8080/api/vendor-invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invoicePayload)
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create invoice');
+      }
+      // Fetch the saved invoice (assume backend returns the invoice or fetch by invoiceNo)
+      let savedInvoice = await response.json();
+      if (!savedInvoice.items) {
+        // fallback: fetch by invoiceNo
+        const fetchResp = await fetch(`http://localhost:8080/api/vendor-invoices/invoiceNo/${invoicePayload.invoiceNo}`);
+        if (fetchResp.ok) savedInvoice = await fetchResp.json();
+        else savedInvoice = { ...invoicePayload };
+      }
+      printInvoice(savedInvoice);
+      setNotification('Invoice created and ready to print!');
+      setTimeout(() => setNotification(''), 3500);
+      if (typeof onBack === 'function') {
+        onBack();
+      } else {
+        navigate('/vendor-invoice');
+      }
+    } catch (err) {
       setError(err.message || 'Failed to create invoice. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -221,6 +409,24 @@ export default function CreateVendorInvoice({ onBack }) {
 
   return (
     <div className="content-panel">
+      {notification && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          background: '#10b981',
+          color: 'white',
+          padding: '16px 28px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          zIndex: 2000,
+          fontSize: '16px',
+          fontWeight: 500
+        }}>
+          {notification}
+        </div>
+      )}
+
       <h2 className="section-title">Create Invoice</h2>
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
@@ -583,7 +789,7 @@ export default function CreateVendorInvoice({ onBack }) {
             {isSubmitting ? 'Saving...' : 'Save Invoice'}
           </button>
           <button
-            onClick={handleSubmit}
+            onClick={handleSaveAndPrint}
             disabled={isSubmitting}
             className="btn"
             style={{

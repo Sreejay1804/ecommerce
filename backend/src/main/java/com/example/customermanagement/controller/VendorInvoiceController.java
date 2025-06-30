@@ -54,8 +54,20 @@ public class VendorInvoiceController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<VendorInvoiceDTO>> getInvoicesByVendorName(@RequestParam String vendorName) {
-        List<VendorInvoiceDTO> invoices = vendorInvoiceService.getInvoicesByVendorName(vendorName);
+    public ResponseEntity<List<VendorInvoiceDTO>> searchVendorInvoices(
+            @RequestParam(value = "invoiceNo", required = false) String invoiceNo,
+            @RequestParam(value = "mobile", required = false) String mobile,
+            @RequestParam(value = "vendorName", required = false) String vendorName) {
+        List<VendorInvoiceDTO> invoices;
+        if (invoiceNo != null && !invoiceNo.isEmpty()) {
+            invoices = vendorInvoiceService.getInvoicesByInvoiceNo(invoiceNo);
+        } else if (mobile != null && !mobile.isEmpty()) {
+            invoices = vendorInvoiceService.getInvoicesByMobile(mobile);
+        } else if (vendorName != null && !vendorName.isEmpty()) {
+            invoices = vendorInvoiceService.getInvoicesByVendorName(vendorName);
+        } else {
+            invoices = vendorInvoiceService.getAllInvoices();
+        }
         return ResponseEntity.ok(invoices);
     }
 

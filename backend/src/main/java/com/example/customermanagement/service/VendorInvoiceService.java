@@ -87,4 +87,15 @@ public class VendorInvoiceService {
             throw new ResourceNotFoundException("Vendor Invoice not found with id: " + id);
         }
     }
+
+    public List<VendorInvoiceDTO> getInvoicesByInvoiceNo(String invoiceNo) {
+        Optional<VendorInvoice> invoiceOpt = vendorInvoiceRepository.findByInvoiceNo(invoiceNo);
+        List<VendorInvoice> invoices = invoiceOpt.map(List::of).orElse(List.of());
+        return vendorInvoiceMapper.toDTOList(invoices);
+    }
+
+    public List<VendorInvoiceDTO> getInvoicesByMobile(String mobile) {
+        List<VendorInvoice> invoices = vendorInvoiceRepository.findByVendorPhone(mobile);
+        return vendorInvoiceMapper.toDTOList(invoices);
+    }
 }
