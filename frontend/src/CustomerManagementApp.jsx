@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AddCustomer from './components/AddCustomer.jsx';
 import AddProduct from './components/AddProduct.jsx';
 import CreateInvoice from './components/CreateInvoice.jsx';
@@ -16,6 +17,7 @@ const CUSTOMER_API = 'http://localhost:8080/api/customers';
 const INVOICE_API = 'http://localhost:8080/api/invoices';
 
 export default function CustomerManagementApp() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [activeMenu, setActiveMenu] = useState(null);
   const [customers, setCustomers] = useState([]);
@@ -382,7 +384,15 @@ export default function CustomerManagementApp() {
       <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <div>
           <div className="sidebar-header">
-            <h1 className="sidebar-title">Dashboard</h1>
+            <h1 
+              className="sidebar-title"
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                navigate('/dashboard'); // Use your dashboard route here
+              }}
+            >
+              Dashboard
+            </h1>
           </div>
           <div className="sidebar-content">
             <div className="sidebar-item">

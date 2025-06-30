@@ -8,6 +8,7 @@ com\example\customermanagement\mapper\VendorInvoiceMapper.class
 com\example\customermanagement\exception\ErrorResponse.class
 com\example\customermanagement\dto\VendorInvoiceDTO.class
 com\example\customermanagement\controller\VendorInvoiceController.class
+com\example\customermanagement\config\WebConfig.class
 com\example\customermanagement\exception\CustomerNotFoundException.class
 com\example\customermanagement\model\Invoice.class
 com\example\customermanagement\exception\ResourceNotFoundException.class

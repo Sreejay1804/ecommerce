@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AddProduct from './components/AddProduct';
 import AddProduct1 from './components/AddProduct1';
 import AddVendor from './components/AddVendor';
@@ -19,6 +20,7 @@ import vendorService from './services/vendorService';
 const VENDOR_API = '/api/vendors';
 
 export default function VendorManagementApp() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { vendors, setVendors } = useVendor();
   const [activeMenu, setActiveMenu] = useState(null);
@@ -568,6 +570,7 @@ export default function VendorManagementApp() {
     setActiveMenu(null);
     setProductPanel(null);
     setEditingProduct(null);
+    setActiveInvoicePage(null);
     setError(null);
   };
 
@@ -604,12 +607,27 @@ export default function VendorManagementApp() {
       <div className="sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <div>
           <div className="sidebar-header">
-            <h1 className="sidebar-title">Dashboard</h1>
+            <h1 
+              className="sidebar-title"
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                navigate('/dashboard'); // Use your dashboard route here
+              }}
+            >
+              Dashboard
+            </h1>
           </div>
           <div className="sidebar-content">
             <div className="sidebar-item">
               <button 
-                onClick={() => handleModuleSwitch('vendor')} 
+                onClick={() => {
+                  setActiveModule('vendor');
+                  setActiveMenu(null);
+                  setProductPanel(null);
+                  setEditingProduct(null);
+                  setActiveInvoicePage(null);
+                  setError(null);
+                }} 
                 className={`sidebar-button${activeModule === 'vendor' ? ' active' : ''}`}
               >
                 Vendor
@@ -625,7 +643,14 @@ export default function VendorManagementApp() {
             </div>
             <div className="sidebar-item">
               <button
-                onClick={() => setActiveInvoicePage('module')}
+                onClick={() => {
+                  setActiveModule('vendor');
+                  setActiveMenu(null);
+                  setProductPanel(null);
+                  setEditingProduct(null);
+                  setActiveInvoicePage('module'); // Always show VendorInvoiceModule
+                  setError(null);
+                }}
                 className={`sidebar-button${activeInvoicePage ? ' active' : ''}`}
               >
                 Invoice
