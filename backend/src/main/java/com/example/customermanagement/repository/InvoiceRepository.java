@@ -37,13 +37,14 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     List<Invoice> findRecentInvoices(@Param("thirtyDaysAgo") LocalDateTime thirtyDaysAgo);
     
     // Search invoices by term (invoice number, customer name, or mobile)
-    @Query("SELECT i FROM Invoice i WHERE " +
+    @Query("SELECT DISTINCT i FROM Invoice i LEFT JOIN FETCH i.items WHERE " +
            "LOWER(i.invoiceNo) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "LOWER(i.customerName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "i.customerMobile LIKE CONCAT('%', :searchTerm, '%')")
     List<Invoice> searchInvoices(@Param("searchTerm") String searchTerm);
     
     // Find all invoices ordered by date (newest first)
+    @Query("SELECT DISTINCT i FROM Invoice i LEFT JOIN FETCH i.items ORDER BY i.invoiceDate DESC")
     List<Invoice> findAllByOrderByInvoiceDateDesc();
     
     // Find invoices by payment status

@@ -69,7 +69,7 @@ public class Invoice {
     @Column(name = "date_time", nullable = false)
     private LocalDateTime dateTime;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JsonManagedReference
     private List<InvoiceItem> items = new ArrayList<>();
 

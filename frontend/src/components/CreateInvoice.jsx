@@ -3,16 +3,17 @@ import { useCallback, useEffect, useState } from 'react';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-export default function CreateInvoice({ handleBack, customers }) {
+export default function CreateInvoice({ handleBack, customers, products = [], onSave }) { // Add products and onSave prop
   // Helper function to get current local datetime for datetime-local input
   const getCurrentLocalDateTime = () => {
+    // Create a date object for current time
     const now = new Date();
-    // Get local time offset
-    const timezoneOffset = now.getTimezoneOffset() * 60000;
-    // Create local time
-    const localTime = new Date(now.getTime() - timezoneOffset);
-    // Return in the format required for datetime-local input (YYYY-MM-DDTHH:MM)
-    return localTime.toISOString().slice(0, 16);
+    
+    // Convert to IST (UTC+5:30)
+    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    
+    // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+    return istTime.toISOString().slice(0, 16);
   };
 
   // Invoice data state
@@ -21,11 +22,11 @@ export default function CreateInvoice({ handleBack, customers }) {
     address: '',
     mobile: '',
     invoiceNo: '',
-    dateTime: getCurrentLocalDateTime() // Use local time instead of UTC
+    dateTime: getCurrentLocalDateTime() // This will now be in IST
   });
 
   // Products state - using itemName to match backend
-  const [products, setProducts] = useState([
+  const [invoiceProducts, setInvoiceProducts] = useState([
     { 
       sno: 1, 
       itemName: '', 
@@ -113,35 +114,47 @@ export default function CreateInvoice({ handleBack, customers }) {
 
   // Handle product field changes with auto-calculation
   const handleProductChange = (index, field, value) => {
-    const updatedProducts = [...products];
-    updatedProducts[index][field] = value;
-
-    // Auto-calculate totals when quantity or unit price changes
-    // CGST and SGST are fixed at 18% each
-    if (['quantity', 'unitPrice'].includes(field)) {
-      const product = updatedProducts[index];
-      const qty = parseFloat(product.quantity) || 0;
-      const price = parseFloat(product.unitPrice) || 0;
-      const cgst = 18; // Fixed at 18%
-      const sgst = 18; // Fixed at 18%
-
-      const subtotal = qty * price;
-      const cgstAmount = (subtotal * cgst) / 100;
-      const sgstAmount = (subtotal * sgst) / 100;
-      const tax = cgstAmount + sgstAmount;
-      const total = subtotal + tax;
-
-      updatedProducts[index].tax = tax.toFixed(2);
-      updatedProducts[index].total = total.toFixed(2);
+    const updatedProducts = [...invoiceProducts];
+    
+    if (typeof field === 'object') {
+      // Handle product selection from dropdown
+      updatedProducts[index] = {
+        ...updatedProducts[index],
+        itemName: field.itemName,
+        category: field.category,
+        unitPrice: field.unitPrice,
+        quantity: updatedProducts[index].quantity || '1',
+        cgst: '18',
+        sgst: '18'
+      };
+    } else {
+      // Handle individual field changes
+      updatedProducts[index][field] = value;
     }
 
-    setProducts(updatedProducts);
+    // Calculate totals
+    const product = updatedProducts[index];
+    const qty = parseFloat(product.quantity) || 0;
+    const price = parseFloat(product.unitPrice) || 0;
+    const cgst = 18;
+    const sgst = 18;
+
+    const subtotal = qty * price;
+    const cgstAmount = (subtotal * cgst) / 100;
+    const sgstAmount = (subtotal * sgst) / 100;
+    const tax = cgstAmount + sgstAmount;
+    const total = subtotal + tax;
+
+    updatedProducts[index].tax = tax.toFixed(2);
+    updatedProducts[index].total = total.toFixed(2);
+
+    setInvoiceProducts(updatedProducts);
   };
 
   // Add new product row
   const addProductRow = () => {
-    setProducts([...products, {
-      sno: products.length + 1,
+    setInvoiceProducts([...invoiceProducts, {
+      sno: invoiceProducts.length + 1,
       itemName: '',
       category: '',
       quantity: '',
@@ -155,13 +168,13 @@ export default function CreateInvoice({ handleBack, customers }) {
 
   // Remove product row
   const removeProductRow = (index) => {
-    if (products.length > 1) {
-      const updatedProducts = products.filter((_, i) => i !== index);
+    if (invoiceProducts.length > 1) {
+      const updatedProducts = invoiceProducts.filter((_, i) => i !== index);
       // Update serial numbers
       updatedProducts.forEach((product, i) => {
         product.sno = i + 1;
       });
-      setProducts(updatedProducts);
+      setInvoiceProducts(updatedProducts);
     }
   };
 
@@ -190,12 +203,12 @@ export default function CreateInvoice({ handleBack, customers }) {
 
   // Calculate grand total
   const calculateGrandTotal = () => {
-    return products.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0).toFixed(2);
+    return invoiceProducts.reduce((sum, product) => sum + (parseFloat(product.total) || 0), 0).toFixed(2);
   };
 
   // Calculate subtotal (before tax)
   const calculateSubtotal = () => {
-    return products.reduce((sum, product) => {
+    return invoiceProducts.reduce((sum, product) => {
       const qty = parseFloat(product.quantity) || 0;
       const price = parseFloat(product.unitPrice) || 0;
       return sum + (qty * price);
@@ -204,7 +217,7 @@ export default function CreateInvoice({ handleBack, customers }) {
 
   // Calculate total tax
   const calculateTotalTax = () => {
-    return products.reduce((sum, product) => sum + (parseFloat(product.tax) || 0), 0).toFixed(2);
+    return invoiceProducts.reduce((sum, product) => sum + (parseFloat(product.tax) || 0), 0).toFixed(2);
   };
 
   // Generate PDF Invoice
@@ -219,7 +232,7 @@ export default function CreateInvoice({ handleBack, customers }) {
       }
 
       // Get valid products for PDF
-      const validProducts = products.filter(p => 
+      const validProducts = invoiceProducts.filter(p => 
         p.itemName.trim() && 
         p.quantity && 
         parseFloat(p.quantity) > 0 && 
@@ -594,7 +607,7 @@ export default function CreateInvoice({ handleBack, customers }) {
     }
 
     // Validate at least one product with required fields
-    const validProducts = products.filter(p => 
+    const validProducts = invoiceProducts.filter(p => 
       p.itemName.trim() && 
       p.quantity && 
       parseFloat(p.quantity) > 0 && 
@@ -611,7 +624,7 @@ export default function CreateInvoice({ handleBack, customers }) {
 
   // Prepare invoice items for backend
   const prepareInvoiceItems = () => {
-    return products
+    return invoiceProducts
       .filter(p => 
         p.itemName.trim() && 
         p.quantity && 
@@ -756,13 +769,27 @@ export default function CreateInvoice({ handleBack, customers }) {
       invoiceNo: '',
       dateTime: getCurrentLocalDateTime() // Use local time when resetting
     });
-    setProducts([
+    setInvoiceProducts([
       { sno: 1, itemName: '', category: '', quantity: '', unitPrice: '', cgst: '18', sgst: '18', tax: '', total: '' }
     ]);
     generateInvoiceNumber();
     setError('');
     setSuccess('');
   };
+
+  // Add a useEffect to update time automatically
+  useEffect(() => {
+    // Update time every minute
+    const timer = setInterval(() => {
+      setInvoiceData(prev => ({
+        ...prev,
+        dateTime: getCurrentLocalDateTime()
+      }));
+    }, 60000); // Update every minute
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="content-panel">
@@ -918,27 +945,58 @@ export default function CreateInvoice({ handleBack, customers }) {
               </tr>
             </thead>
             <tbody>
-              {products.map((product, index) => (
+              {invoiceProducts.map((product, index) => (
                 <tr key={index}>
-                  <td style={{ padding: '8px', border: '1px solid #e5e7eb', textAlign: 'center' }}>
-                    {product.sno}
+                  <td style={{ 
+                    padding: '8px', 
+                    border: '1px solid #e5e7eb', 
+                    textAlign: 'center',
+                    backgroundColor: '#f8fafc'  // Light background for s.no column
+                  }}>
+                    {index + 1}  {/* Automatically calculate s.no based on index */}
                   </td>
                   <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
-                    <input
-                      type="text"
+                    <select
                       value={product.itemName}
-                      onChange={(e) => handleProductChange(index, 'itemName', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '4px', fontSize: '14px' }}
+                      onChange={(e) => {
+                        const selectedProduct = products.find(p => p.name === e.target.value);
+                        if (selectedProduct) {
+                          handleProductChange(index, {
+                            itemName: selectedProduct.name,
+                            category: selectedProduct.category, // This will be set from the selected product
+                            unitPrice: selectedProduct.unitPrice.toString()
+                          });
+                        }
+                      }}
+                      style={{ 
+                        width: '100%', 
+                        border: 'none', 
+                        padding: '4px', 
+                        fontSize: '14px',
+                        backgroundColor: 'white' 
+                      }}
                       disabled={loading}
-                    />
+                    >
+                      <option value="">Select a product</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.name}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
                     <input
                       type="text"
                       value={product.category}
-                      onChange={(e) => handleProductChange(index, 'category', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '4px', fontSize: '14px' }}
-                      disabled={loading}
+                      readOnly
+                      style={{ 
+                        width: '100%', 
+                        border: 'none', 
+                        padding: '4px', 
+                        fontSize: '14px',
+                        backgroundColor: '#f3f4f6'
+                      }}
                     />
                   </td>
                   <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
@@ -956,11 +1014,14 @@ export default function CreateInvoice({ handleBack, customers }) {
                     <input
                       type="number"
                       value={product.unitPrice}
-                      onChange={(e) => handleProductChange(index, 'unitPrice', e.target.value)}
-                      style={{ width: '100%', border: 'none', padding: '4px', fontSize: '14px' }}
-                      min="0"
-                      step="0.01"
-                      disabled={loading}
+                      readOnly
+                      style={{ 
+                        width: '100%', 
+                        border: 'none', 
+                        padding: '4px', 
+                        fontSize: '14px',
+                        backgroundColor: '#f3f4f6'
+                      }}
                     />
                   </td>
                   <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
@@ -999,7 +1060,7 @@ export default function CreateInvoice({ handleBack, customers }) {
                         fontSize: '12px',
                         cursor: 'pointer'
                       }}
-                      disabled={products.length === 1 || loading}
+                      disabled={invoiceProducts.length === 1 || loading}
                     >
                       Remove
                     </button>

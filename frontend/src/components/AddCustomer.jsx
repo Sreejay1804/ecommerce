@@ -17,18 +17,28 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Check if we're editing a customer from URL params or external trigger
+  // Update the useEffect hook that handles edit mode
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
+    
     if (editId && customers) {
       const customerToEdit = customers.find(c => c.id.toString() === editId);
       if (customerToEdit) {
-        handleEditCustomer(customerToEdit);
+        setFormData({
+          name: customerToEdit.name,
+          email: customerToEdit.email,
+          phone: customerToEdit.phone,
+          address: customerToEdit.address || ''
+        });
+        setSelectedCustomerId(customerToEdit.id);
+        setIsEditing(true);
+        setFormErrors({ name: '', email: '', phone: '' });
       }
     }
   }, [customers]);
 
+  // Update the validateForm function
   const validateForm = () => {
     let isValid = true;
     const errors = {
@@ -64,21 +74,28 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
       isValid = false;
     }
 
-    // Check for duplicate email (only when adding new customer)
+    // Check for duplicate email and phone only when adding new customer
     if (!isEditing && customers) {
-      const emailExists = customers.some(customer => 
+      const emailExists = customers.some(customer =>
         customer.email.toLowerCase() === formData.email.toLowerCase()
       );
       if (emailExists) {
         errors.email = 'A customer with this email already exists';
         isValid = false;
       }
+      const phoneExists = customers.some(customer =>
+        customer.phone === formData.phone
+      );
+      if (phoneExists) {
+        errors.phone = 'A customer with this phone number already exists';
+        isValid = false;
+      }
     }
 
-    // Check for duplicate email when editing (exclude current customer)
+    // Check only for duplicate email when editing (exclude current customer)
     if (isEditing && customers && selectedCustomerId) {
-      const emailExists = customers.some(customer => 
-        customer.email.toLowerCase() === formData.email.toLowerCase() && 
+      const emailExists = customers.some(customer =>
+        customer.email.toLowerCase() === formData.email.toLowerCase() &&
         customer.id !== selectedCustomerId
       );
       if (emailExists) {
@@ -151,10 +168,7 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
     setSubmitError('');
@@ -170,20 +184,28 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
 
       if (isEditing && selectedCustomerId !== null) {
         result = await onUpdateCustomer(selectedCustomerId, customerData);
+        if (result.success) {
+          alert('Customer updated successfully!');
+          // Clear edit mode and form after successful update
+          setIsEditing(false);
+          setSelectedCustomerId(null);
+          setFormData({ name: '', email: '', phone: '', address: '' });
+          // Remove edit parameter from URL
+          const url = new URL(window.location);
+          url.searchParams.delete('edit');
+          window.history.pushState(null, '', url);
+          // Return to customer list
+          onBack();
+        }
       } else {
         result = await onAddCustomer(customerData);
+        if (result.success) {
+          alert('Customer added successfully!');
+          setFormData({ name: '', email: '', phone: '', address: '' });
+        }
       }
 
-      if (result.success) {
-        // Reset form
-        setFormData({ name: '', email: '', phone: '', address: '' });
-        setFormErrors({ name: '', email: '', phone: '' });
-        setIsEditing(false);
-        setSelectedCustomerId(null);
-        
-        // Show success message or redirect
-        alert(isEditing ? 'Customer updated successfully!' : 'Customer added successfully!');
-      } else {
+      if (!result.success) {
         setSubmitError(result.error || 'An error occurred while saving the customer');
       }
     } catch (error) {
@@ -195,11 +217,17 @@ export default function AddCustomer({ onAddCustomer, onUpdateCustomer, onBack, c
   };
 
   const handleCancel = () => {
+    // Clear edit mode and form
     setFormData({ name: '', email: '', phone: '', address: '' });
     setFormErrors({ name: '', email: '', phone: '' });
     setIsEditing(false);
     setSelectedCustomerId(null);
     setSubmitError('');
+    // Remove edit parameter from URL
+    const url = new URL(window.location);
+    url.searchParams.delete('edit');
+    window.history.pushState(null, '', url);
+    // Return to previous screen
     onBack();
   };
 
