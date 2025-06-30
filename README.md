@@ -47,13 +47,13 @@ A full-stack ecommerce application designed to provide a seamless shopping exper
 Clone the project
 
 ```bash
-git clone https://link-to-project
+git clone https://github.com/Sreejay1804/ecommerce.git
 ```
 
 Go to the project directory
 
 ```bash
-cd my-project
+cd ecommerce
 ```
 
 Install dependencies
