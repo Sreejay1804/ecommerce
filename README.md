@@ -17,7 +17,7 @@ A full-stack ecommerce application designed to provide a seamless shopping exper
 
 - [Sreejay V](https://github.com/Sreejay1804)
 - [Supriya K ](https://github.com/supriyak2505)
-- [Vinuhashini V](https://github.com/VinuHashini)
+- [Vinu Hashini V](https://github.com/VinuHashini)
 
 ## 🛠️ Tech Stack
 
