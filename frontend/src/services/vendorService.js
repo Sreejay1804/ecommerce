@@ -1,4 +1,4 @@
-const API_BASE_URL = '/api/vendors';
+const API_BASE_URL = 'https://ecommerce-lce3.onrender.com/api/vendors';
 
 // Create axios-like functionality with proper error handling
 const apiRequest = async (url, options = {}) => {

@@ -1,5 +1,5 @@
 // services/productService.js
-const API_BASE_URL = 'http://localhost:8080/api/products';
+const API_BASE_URL = 'https://ecommerce-lce3.onrender.com/api/products';
 
 const productService = {
   // Get all products
