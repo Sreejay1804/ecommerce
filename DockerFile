@@ -17,7 +17,7 @@ COPY backend/src ./src/
 RUN mvn clean package -DskipTests
 
 # Use OpenJDK for runtime
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-jre-slim
 
 # Set working directory
 WORKDIR /app
