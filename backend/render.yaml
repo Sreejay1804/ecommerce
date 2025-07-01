@@ -1,0 +1,13 @@
+﻿services:
+  - type: web
+    name: ecommerce-backend
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/*.jar
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://postgres:Sreejay1804@db.ixwfkkkhetfijfnstsza.supabase.co:5432/postgres?sslmode=require
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
