@@ -19,7 +19,7 @@ export default function SearchVendorInvoice({ handleBack, onBack }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/vendor-invoices', {
+      const response = await fetch('https://ecommerce-lce3.onrender.com/api/vendor-invoices', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -49,14 +49,14 @@ export default function SearchVendorInvoice({ handleBack, onBack }) {
     setError('');
     try {
       const term = searchTerm.trim();
-      let url = '/api/vendor-invoices';
+      let url = 'https://ecommerce-lce3.onrender.com/api/vendor-invoices';
       if (term) {
         if (/^INV\d+$/i.test(term)) {
-          url = `/api/vendor-invoices/search?vendorName=&invoiceNo=${encodeURIComponent(term)}`;
+          url = `https://ecommerce-lce3.onrender.com/api/vendor-invoices/search?vendorName=&invoiceNo=${encodeURIComponent(term)}`;
         } else if (/^\d{10}$/.test(term)) {
-          url = `/api/vendor-invoices/search?vendorName=&mobile=${encodeURIComponent(term)}`;
+          url = `https://ecommerce-lce3.onrender.com/api/vendor-invoices/search?vendorName=&mobile=${encodeURIComponent(term)}`;
         } else {
-          url = `/api/vendor-invoices/search?vendorName=${encodeURIComponent(term)}`;
+          url = `https://ecommerce-lce3.onrender.com/api/vendor-invoices/search?vendorName=${encodeURIComponent(term)}`;
         }
       }
       const response = await fetch(url, {
@@ -86,7 +86,7 @@ export default function SearchVendorInvoice({ handleBack, onBack }) {
 
   const handleView = async (invoice) => {
     try {
-      const response = await fetch(`/api/vendor-invoices/${invoice.id}`, {
+      const response = await fetch(`https://ecommerce-lce3.onrender.com/api/vendor-invoices/${invoice.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -308,7 +308,7 @@ export default function SearchVendorInvoice({ handleBack, onBack }) {
 
   const handleEdit = async (invoice) => {
     try {
-      const response = await fetch(`/api/vendor-invoices/${invoice.id}`, {
+      const response = await fetch(`https://ecommerce-lce3.onrender.com/api/vendor-invoices/${invoice.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -393,7 +393,7 @@ export default function SearchVendorInvoice({ handleBack, onBack }) {
           })),
           grandTotal: formData.items.reduce((sum, item) => sum + parseFloat(item.total), 0)
         };
-        const response = await fetch(`/api/vendor-invoices/${invoice.id}`, {
+        const response = await fetch(`https://ecommerce-lce3.onrender.com/api/vendor-invoices/${invoice.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
@@ -518,7 +518,7 @@ export default function SearchVendorInvoice({ handleBack, onBack }) {
 
   const handlePrint = async (invoice) => {
     try {
-      const response = await fetch(`/api/vendor-invoices/${invoice.id}`, {
+      const response = await fetch(`https://ecommerce-lce3.onrender.com/api/vendor-invoices/${invoice.id}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
