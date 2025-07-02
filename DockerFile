@@ -2,28 +2,19 @@ FROM maven:3.9-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-# Copy pom.xml first for better caching
 COPY backend/pom.xml ./pom.xml
-
-# Download dependencies
 RUN mvn dependency:go-offline
 
-# Copy source code
 COPY backend/src ./src
-
-# Build the application
 RUN mvn clean package -DskipTests
 
-# Runtime stage
 FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-# Copy the jar file
 COPY --from=builder /app/target/*.jar app.jar
 
-# Expose port (Render will inject the actual PORT)
 EXPOSE 8080
 
-# Run the application with Render-specific configurations
+# Force the port via JVM argument
 CMD ["sh", "-c", "java -Xmx400m -Dserver.port=${PORT:-8080} -Dserver.address=0.0.0.0 -jar app.jar"]
