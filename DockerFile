@@ -22,8 +22,8 @@ WORKDIR /app
 # Copy the jar file
 COPY --from=builder /app/target/*.jar app.jar
 
-# Expose port
+# Expose port (Render will inject the actual PORT)
 EXPOSE 8080
 
-# Run the application
-CMD ["java", "-jar", "app.jar"]
+# Run the application with Render-specific configurations
+CMD ["sh", "-c", "java -Xmx400m -Dserver.port=${PORT:-8080} -Dserver.address=0.0.0.0 -jar app.jar"]
